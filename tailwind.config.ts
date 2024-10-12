@@ -12,6 +12,17 @@ const config: Config = {
         background: "var(--background)",
         foreground: "var(--foreground)",
       },
+      padding: {
+        primaryX: "1rem", // equivalent to px-4
+        primaryY: "0.5rem", // equivalent to py-2
+      },
+      height: {
+        hCard: "10vh",
+      },
+      width: {
+        wCard: "100%",
+        wmdCard: "45%",
+      },
     },
   },
   plugins: [],
