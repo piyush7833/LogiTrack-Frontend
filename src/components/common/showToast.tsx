@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { toast } from "react-toastify";
 import { FaCheckCircle } from "react-icons/fa";
 import { IoInformationCircle, IoWarning } from "react-icons/io5";
@@ -34,6 +35,7 @@ const showToast = (
   loadingMsg?: any,
   duration?: any
 ) => {
+  console.log("showing toast")
   toast.dismiss(); // to dismiss the previous toast if no time or no autoclose
   if (promise) {
     // Show loading indicator
@@ -97,7 +99,8 @@ const showToast = (
       .catch((error) => {
         toast.dismiss(loadingId); //already handled in useHTTPclient
       });
-  } else {
+  }
+   else {
     // Handle non-promise case as before
     if (duration) toast.dismiss();
     (toast as any)[type](

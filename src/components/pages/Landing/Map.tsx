@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { useMapEvents, useMap, Polyline } from "react-leaflet";
+import "leaflet-routing-machine";
 import useLocation from "@/app/hooks/useLocation";
 
 // Dynamically import the MapContainer, TileLayer, and Marker for client-side rendering
@@ -44,6 +46,9 @@ const Map = ({ src, destn }: PropsType) => {
   const [distance, setDistance] = useState<number | null>(null);
   const [time, setTime] = useState<number | null>(null);
 
+  const previousSrc = useRef<any>(null);
+  const previousDestn = useRef<any>(null);
+
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -63,7 +68,7 @@ const Map = ({ src, destn }: PropsType) => {
 
   useEffect(() => {
     if (src && src.lat && src.lon && destn && destn.lat && destn.lon) {
-      
+      setMarkerLocation(src);
     } else if (src) {
       setMarkerLocation(src);
     } else if (destn) {
@@ -111,36 +116,53 @@ const Map = ({ src, destn }: PropsType) => {
 
   const RouteCalculator = () => {
     const map = useMap();
-
+  
     useEffect(() => {
       const calculateRoute = async () => {
         try {
-          const response = await getRoute(src, destn);
-          console.log(response, "response from getRoute");
-          if (!response || !response.data) {
-            console.error("Invalid response from getRoute:", response);
-            return;
+          // Check if src and destn have changed to avoid multiple calls
+          if (
+            previousSrc.current?.lat === src.lat &&
+            previousSrc.current?.lon === src.lon &&
+            previousDestn.current?.lat === destn.lat &&
+            previousDestn.current?.lon === destn.lon
+          ) {
+            return; // No changes in source and destination
           }
+  
+          const response = await getRoute(src, destn);
+          if (!response || !response.data || !response.data.route || response.data.route.length === 0) {
+            console.error("Invalid or empty route data from getRoute:", response);
+            return; // Exit if the route data is invalid or empty
+          }
+  
           setRoute(response.data.route);
           setDistance(response.data.distance);
           setTime(response.data.time);
+  
           const routeLine = L.polyline(response.data.route, {
             color: "blue",
             weight: 5,
           }).addTo(map);
+  
           map.fitBounds(routeLine.getBounds());
+  
+          // Update previousSrc and previousDestn refs
+          previousSrc.current = src;
+          previousDestn.current = destn;
         } catch (error) {
           console.error("Error calculating route:", error);
         }
       };
-
+  
       if (src && src.lat && src.lon && destn && destn.lat && destn.lon) {
         calculateRoute();
       }
     }, [src, destn, map]);
-
+  
     return null;
   };
+  
 
   return (
     <div>

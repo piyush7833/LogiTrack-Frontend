@@ -1,64 +1,80 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
-import React, { useState } from "react";
+import React, {  useEffect, useState } from "react";
 import Card from "@/components/common/Card";
 import { PiPlusCircleBold } from "react-icons/pi";
 import DialogBox from "@/components/common/DialogBox";
+import useVehicle from "@/app/hooks/useVehicle";
+import { useSelector } from "react-redux";
+import useDriver from "@/app/hooks/useDriver";
+import { useRouter } from "next/navigation";
+import Button from "@/components/common/Button";
 
+type VehicleType = {
+  _id: string;
+  type: string;
+  model: string;
+  numberPlate: string;
+  driver?: any;
+};
+type DriverType = {
+  _id: string;
+  name: string;
+  licenseNumber: string;
+  email: string;
+  vehicle?: any;
+};
 const Fleet = () => {
+  const router=useRouter()
   const [isOpen, setIsOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState<string|false>(false);
+  const [editFormValues, setEditFormValues] = useState({});
+
   const [newVehicle, setNewVehicle] = useState({
-    title: "",
-    desc: "",
-    img: "",
-    driver: "",
+    type: "",
+    model: "",
+    numberPlate: "",
   });
-
-  const data = [
-    {
-      title: "Heavy Duty Cargo Truck",
-      desc: "A reliable truck for transporting heavy cargo across long distances.",
-      img: "/images/default.png",
-      driver: "Shivendra",
-    },
-    {
-      title: "Pickup Truck",
-      desc: "Versatile pickup truck suitable for both work and leisure, equipped with a spacious bed.",
-      img: "/images/default.png",
-      driver: "Shivendra",
-    },
-    {
-      title: "Mini Delivery Truck",
-      desc: "Compact delivery truck ideal for urban deliveries, with a fuel-efficient engine.",
-      img: "/images/default.png",
-      driver: "Shivendra",
-    },
-    {
-      title: "Tow Truck",
-      desc: "A tow truck designed for roadside assistance and vehicle towing, equipped with a hydraulic lift.",
-      img: "/images/default.png",
-      driver: "Shivendra",
-    },
-    {
-      title: "Dump Truck",
-      desc: "Heavy-duty dump truck for construction and mining operations, with a large capacity bed.",
-      img: "/images/default.png",
-      driver: "Shivendra",
-    },
-  ];
-
-  const handleAddVehicle = (e: React.FormEvent<HTMLFormElement>) => {
+  const { vehicles } = useSelector((state: { vehicle: { vehicles: VehicleType[] } }) => state.vehicle);
+  const { drivers } = useSelector((state: { driver: { drivers: DriverType[] } }) => state.driver);
+  const {addVehicle,getVehicle,deleteVehicle,updateVehicle}=useVehicle()
+  const {getDriver}=useDriver()
+  useEffect(() => {
+    const fetchData = async () => {
+       await getVehicle();
+       await getDriver();
+    };
+    fetchData();
+  },[]);
+  const handleAddVehicle = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.preventDefault();
-    // Add the new vehicle to the fleet (You can implement your own logic to store this data)
-    console.log("New Vehicle:", newVehicle);
-    setNewVehicle({ title: "", desc: "", img: "", driver: "" });
+    addVehicle(newVehicle)
+    setNewVehicle({ type: "", numberPlate: "", model: ""});
     setIsOpen(false);
   };
 
+  const handleEditChange = (e:React.ChangeEvent<HTMLSelectElement> | React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditFormValues({
+      ...editFormValues,
+      [name]: value,
+    });
+  };
+  const handleUpdateVehicle = (e: React.FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    e.preventDefault();
+    updateVehicle(editFormValues,isEditOpen as string);
+    setEditFormValues({});
+    setIsEditOpen(false);
+  }
+  console.log(vehicles,"Vehicles")
   return (
     <div className="min-h-screen ">
+
       <div className="flex w-full flex-wrap gap-4 justify-center px-primaryX py-primaryY">
-        {data.map((item, index) => (
-          <Card key={index} {...item} onDelete={()=>{console.log("delete")}} />
+        {vehicles.length>0 &&  vehicles.map((item:VehicleType, index:any) => (
+          <Card key={index} title={item?.model} desc={item?.numberPlate} vehicleType={item?.type} driver={item?.driver?.name || "No driver"}  onDelete={()=>{deleteVehicle((item?._id) as string)}}
+          onEdit={()=>{setIsEditOpen(item._id)}} onClick={()=>{router.push(`/admin/fleet/${item._id}`)}}
+          />
         ))}
         <button
           onClick={() => setIsOpen(true)}
@@ -68,44 +84,103 @@ const Fleet = () => {
         </button>
       </div>
 
+      {/* Custom Dialog for Editing Vehicle */}
+      <DialogBox isOpen={isEditOpen!==false} onClose={() => setIsEditOpen(false)} title="Edit Vehicle">
+        <form onSubmit={(e) => handleUpdateVehicle(e)}>
+          <div className="mb-4">
+            <label className="block mb-1">Type</label>
+            <select
+              name="type"
+              required
+              onChange={(e) => handleEditChange(e)}
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+            >
+              {["select type", "truck", "mini truck", "big truck"].map((option) => (
+                <option key={option} value={option}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Model</label>
+            <input
+              type="text"
+              onChange={(e) => handleEditChange(e)}
+              className="w-full border rounded p-2"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Number Plate</label>
+            <input
+              type="text"
+              onChange={(e) => handleEditChange(e)}
+              className="w-full border rounded p-2"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Driver</label>
+            <select
+              name="driverId"
+              onChange={(e) => handleEditChange(e)}
+              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+            >
+              <option value="">Select Driver</option>
+              <option value="Remove Driver">Remove Driver</option>
+                {drivers
+                .filter((driver) => !driver.vehicle)
+                .map((driver) => (
+                  <option key={driver._id} value={driver._id}>
+                  {driver.name}
+                  </option>
+                ))}
+            </select>
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition"
+            >
+              Update Vehicle
+            </button>
+          </div>
+        </form>
+      </DialogBox>
+
       {/* Custom Dialog for Adding Vehicle */}
       <DialogBox isOpen={isOpen} onClose={() => setIsOpen(false)} title="Add New Vehicle">
         <form onSubmit={(e)=>handleAddVehicle(e)}>
           <div className="mb-4">
-            <label className="block mb-1">Title</label>
+            <label className="block mb-1">Type</label>
+            <select
+                  name={"type"}
+                  required={true}
+                  onChange={(e) => setNewVehicle({ ...newVehicle, type: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+                >
+                  {["select type","truck","mini truck","big truck"].map((option) => (
+                    <option key={option} value={option}>
+                      {option.charAt(0).toUpperCase() + option.slice(1)}
+                    </option>
+                  ))}
+                </select>
+          </div>
+          <div className="mb-4">
+            <label className="block mb-1">Model</label>
             <input
               type="text"
-              value={newVehicle.title}
-              onChange={(e) => setNewVehicle({ ...newVehicle, title: e.target.value })}
+              value={newVehicle.model}
+              onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
               className="w-full border rounded p-2"
               required
             />
           </div>
           <div className="mb-4">
-            <label className="block mb-1">Description</label>
-            <textarea
-              value={newVehicle.desc}
-              onChange={(e) => setNewVehicle({ ...newVehicle, desc: e.target.value })}
-              className="w-full border rounded p-2"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1">Image URL</label>
+            <label className="block mb-1">Number Plate</label>
             <input
               type="text"
-              value={newVehicle.img}
-              onChange={(e) => setNewVehicle({ ...newVehicle, img: e.target.value })}
-              className="w-full border rounded p-2"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1">Driver Name</label>
-            <input
-              type="text"
-              value={newVehicle.driver}
-              onChange={(e) => setNewVehicle({ ...newVehicle, driver: e.target.value })}
+              value={newVehicle.numberPlate}
+              onChange={(e) => setNewVehicle({ ...newVehicle, numberPlate: e.target.value })}
               className="w-full border rounded p-2"
               required
             />
@@ -114,9 +189,11 @@ const Fleet = () => {
             <button
               type="submit"
               className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition"
+              onClick={(e)=>(handleAddVehicle(e))}
             >
               Add Vehicle
             </button>
+            <Button text="Add vehicle" onClick={(e)=>{handleAddVehicle(e)}} />
           </div>
         </form>
       </DialogBox>

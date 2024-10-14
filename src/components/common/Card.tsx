@@ -1,18 +1,22 @@
 "use client"
 import Image from "next/image";
 import React from "react";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdEdit } from "react-icons/md";
 
 type propsType = {
-  id?: string;
+  // id?: string;
   title: string;
   desc?: string;
+  primaryText?:string,
+  secondaryText?:string, 
   img?: string;
   price?: number;
   time?: string;
   driver?: string;
+  vehicleType?: string;
   onClick?:()=>void
   onDelete?:()=>void
+  onEdit?:()=>void
 };
 const Card = ({
   title,
@@ -23,12 +27,18 @@ const Card = ({
   onClick,
   driver,
   onDelete,
-  id
+  onEdit,
+  vehicleType,
+  primaryText,
+  secondaryText,
+
 }: propsType) => {
+  console.log(title,"Card")
   return (
-    <div className="px-primaryX py-primaryY rounded-sm flex gap-2 min-h-hCard w-wCard md:w-wmdCard border-[1px] relative" onClick={()=>onClick && onClick()}>
+    <div className="px-primaryX py-primaryY rounded-sm flex gap-2 min-h-hCard w-wCard md:w-wmdCard border-[1px] relative hover:cursor-pointer hover:bg-slate-100" onClick={()=>onClick && onClick()}>
+      <div className="flex flex-col gap-2 absolute bottom-1 right-2 ">
         {onDelete && <button 
-        className="absolute bottom-2 right-2 p-1 bg-red-500 text-white rounded-full" 
+        className="p-1 bg-red-500 text-white rounded-full" 
         onClick={(e) => {
           e.stopPropagation();
           if (onDelete) onDelete();
@@ -36,6 +46,16 @@ const Card = ({
       >
        <MdDelete/>
       </button>}
+        {onEdit && <button 
+        className="p-1 bg-blue-500 text-white rounded-full" 
+        onClick={(e) => {
+          e.stopPropagation();
+          if (onEdit) onEdit();
+        }}
+      >
+       <MdEdit/>
+      </button>}
+      </div>
       <div className="img h-full w-1/4 relative flex items-center justify-start">
         <Image src={img} alt={title} fill className="object-contain"/>
       </div>
@@ -44,14 +64,18 @@ const Card = ({
           <p className="font-semibold">{title}</p>
           <p>{desc}</p>
         </div>
-        <div className="flex justify-between w-1/3 flex-col">
+        {(price || time)&&<div className="flex justify-between w-1/3 flex-col">
           <p className="font-semibold">{price ? `₹${price}` : null}</p>
           <p>{time}</p>
-        </div>
-        <div className="flex justify-between w-1/3 flex-col">
-          <p className="font-semibold">{driver ? `Driver ${driver}` : null}</p>
-          <p>{time}</p>
-        </div>
+        </div>}
+        {(driver || vehicleType) &&<div className="flex justify-between w-1/3 flex-col">
+          <p className="font-semibold">{driver ? `Driver:- ${driver}` : null}</p>
+          <p className="font-semibold">{vehicleType ? `Type:- ${vehicleType}` : null}</p>
+        </div>}
+        {(primaryText|| secondaryText) &&<div className="flex justify-between w-1/3 flex-col">
+          <p className="font-semibold">{primaryText ? primaryText : null}</p>
+          <p className="">{secondaryText ? secondaryText : null}</p>
+        </div>}
 
         
       </div>

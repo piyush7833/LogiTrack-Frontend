@@ -1,60 +1,69 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useRouter } from "next/navigation";
 import showToast from "@/components/common/showToast";
 import { useHttpClient } from "./useHttpClient";
 import { BACKEND_API_ENDPOINTS_MAP } from "../../../config/constantMaps";
-
-
-const useEmailAuth = () => {
+import { useDispatch } from "react-redux";
+import { loginSuccess, logout, setUser } from "@/store/authSlice";
+const useAuth = () => {
   const router = useRouter();
 
-  const { isLoading, sendRequest, sendAuthorizedRequest } =
-    useHttpClient();
-
-
-  const handleEmailAuth = async (
+  const { isLoading, sendRequest, sendAuthorizedRequest } = useHttpClient();
+  const dispatch = useDispatch();
+  const handleAuth = async (
     operation: string,
-    formData: { username: string; email: string; password: string }
+    formData: {
+      name?: string;
+      username?: string;
+      phone?: string;
+      email: string;
+      password: string;
+      role?: string;
+      licenseNumber?: string;
+      secretKey?: string;
+    }
   ) => {
     try {
-      // console.log(formData);
       if (operation === "login") {
-        // console.log("Login operation");
         const data = {
           email: formData.email,
           password: formData.password,
         };
         const res = await sendRequest(
-          BACKEND_API_ENDPOINTS_MAP.EMAIL_LOGIN,
+          BACKEND_API_ENDPOINTS_MAP.AUTH+"/login",
           "POST",
           data,
           {},
+          true,
           true
         );
         if (res?.status === 202) {
-          showToast("warning", res.data.detail);
+          showToast("warning", res.data.message);
           return;
         }
-
-        // dispatch(user());
-        // console.log(res);
+        dispatch(loginSuccess(res.data));
+        router.push("/")
         return res;
-        // router.push(`/verify/${res?.data.access_token}`);
       } else if (operation === "signup") {
-        // console.log("Signup operation");
         const data = {
-          username: formData.username,
+          name: formData.name ? formData.name : null,
+          username: formData.username ? formData.username : null,
+          phone: formData.phone ? formData.phone : null,
           email: formData.email,
           password: formData.password,
+          role: formData.role ? formData.role : null,
+          licenseNumber: formData.licenseNumber ? formData.licenseNumber : null,
+          secretKey: formData.secretKey ? formData.secretKey : null,
         };
         const res = await sendRequest(
-          BACKEND_API_ENDPOINTS_MAP.EMAIL_SIGNUP,
+          BACKEND_API_ENDPOINTS_MAP.AUTH+"/signup",
           "POST",
           data,
           {},
           true
         );
-        showToast("success", res?.data.detail);
+        showToast("success", res?.data.message);
         // console.log(res);
         return res;
       } else {
@@ -67,81 +76,136 @@ const useEmailAuth = () => {
     }
   };
 
-  const handleForgotPassword = async (email: string) => {
-    try {
-      console.log("Forgot password email: ", email);
+  const handleLogout=async()=>{
+    dispatch(logout());
+    router.push("/auth?mode=login");
+  }
 
-      const data = {
-        email: email,
-      };
-      const res = await sendRequest(
-        BACKEND_API_ENDPOINTS_MAP.EMAIL_FORGOT_PASSWORD,
-        "POST",
-        data,
+  const handleGetOwnProfile = async () => {
+    try {
+      const res = await sendAuthorizedRequest(
+        BACKEND_API_ENDPOINTS_MAP.AUTH+"/me",
+        "GET",
         {},
         true
       );
-      console.log(res);
-      showToast("success", res?.data.detail);
+      dispatch(setUser(res.data.data.user));
       return res;
     } catch (error: any) {
       showToast("error", "Some error occurred");
       console.log(error);
     }
-  };
+  }
 
-  const handleResetPassword = async (password: string) => {
+  const handleGetParticularProfile = async (id:string) => {
     try {
-      const data = {
-        password: password,
-      };
       const res = await sendAuthorizedRequest(
-        BACKEND_API_ENDPOINTS_MAP.EMAIL_RESET_PASSWORD,
-        "POST",
-        data,
+        BACKEND_API_ENDPOINTS_MAP.AUTH+"/get/"+id,
+        "GET",
+        {},
         true
       );
-      // console.log(res);
-      showToast("success", res?.data.detail);
-
-      // Get the previous URL from browser history (if available)
-
       return res;
     } catch (error: any) {
       showToast("error", "Some error occurred");
-      router.push("/auth");
       console.log(error);
     }
-  };
-
-  const handleResendVerificationMail = async (email: string) => {
+  }
+  const handleUpdateProfile = async (formData:any) => {
     try {
-      const data = {
-        email: email,
-      };
       const res = await sendAuthorizedRequest(
-        BACKEND_API_ENDPOINTS_MAP.EMAIL_RESEND_VERIFICATION,
-        "POST",
-        data,
+        BACKEND_API_ENDPOINTS_MAP.AUTH+"/update",
+        "PUT",
+        formData,
         true
       );
-      console.log(res);
-      showToast("success", res?.data.detail);
+      dispatch(setUser(res.data.data.user));
       return res;
     } catch (error: any) {
       showToast("error", "Some error occurred");
       console.log(error);
     }
-  };
+  }
 
+
+  // const handleForgotPassword = async (email: string) => {
+  //   try {
+  //     console.log("Forgot password email: ", email);
+
+  //     const data = {
+  //       email: email,
+  //     };
+  //     const res = await sendRequest(
+  //       BACKEND_API_ENDPOINTS_MAP.EMAIL_FORGOT_PASSWORD,
+  //       "POST",
+  //       data,
+  //       {},
+  //       true
+  //     );
+  //     console.log(res);
+  //     showToast("success", res?.data.detail);
+  //     return res;
+  //   } catch (error: any) {
+  //     showToast("error", "Some error occurred");
+  //     console.log(error);
+  //   }
+  // };
+
+  // const handleResetPassword = async (password: string) => {
+  //   try {
+  //     const data = {
+  //       password: password,
+  //     };
+  //     const res = await sendAuthorizedRequest(
+  //       BACKEND_API_ENDPOINTS_MAP.EMAIL_RESET_PASSWORD,
+  //       "POST",
+  //       data,
+  //       true
+  //     );
+  //     // console.log(res);
+  //     showToast("success", res?.data.detail);
+
+  //     // Get the previous URL from browser history (if available)
+
+  //     return res;
+  //   } catch (error: any) {
+  //     showToast("error", "Some error occurred");
+  //     router.push("/auth");
+  //     console.log(error);
+  //   }
+  // };
+
+  // const handleResendVerificationMail = async (email: string) => {
+  //   try {
+  //     const data = {
+  //       email: email,
+  //     };
+  //     const res = await sendAuthorizedRequest(
+  //       BACKEND_API_ENDPOINTS_MAP.EMAIL_RESEND_VERIFICATION,
+  //       "POST",
+  //       data,
+  //       true
+  //     );
+  //     console.log(res);
+  //     showToast("success", res?.data.detail);
+  //     return res;
+  //   } catch (error: any) {
+  //     showToast("error", "Some error occurred");
+  //     console.log(error);
+  //   }
+  // };
 
   return {
-    handleEmailAuth,
-    handleForgotPassword,
-    handleResetPassword,
-    handleResendVerificationMail,
+    handleAuth,
+    handleUpdateProfile,
+    handleGetOwnProfile,
+    handleGetParticularProfile,
+    // handleForgotPassword,
+    // handleResetPassword,
+    // handleResendVerificationMail,
+    handleLogout,
     isLoading,
   };
 };
 
-export default useEmailAuth;
+export default useAuth;

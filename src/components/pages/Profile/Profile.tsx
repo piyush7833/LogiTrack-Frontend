@@ -1,23 +1,28 @@
 "use client"
-import React, { useState } from "react";
+import useAuth from "@/app/hooks/useAuth";
+import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 type UserProfile = {
   name: string;
   email: string;
   phone: string;
-  [key: string]: string; // Add index signature
 };
 
 const Profile = () => {
   // Sample user data
-  const [user, setUser] = useState<UserProfile>({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    phone: "+1234567890",
+  const {handleGetOwnProfile,handleUpdateProfile}=useAuth()
+  const { user } = useSelector((state: { auth: { user: UserProfile | null } }) => {
+    const { name, email, phone } = state.auth.user || {};
+    return { user: { name: name || "", email: email || "", phone: phone || "" } };
   });
+  useEffect(() => {
+    handleGetOwnProfile();
+  }, []);
+console.log(user,"user")
 
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(user);
+  const [formData, setFormData] = useState<UserProfile>(user);
 
   const handleChange = (e:React.ChangeEvent<HTMLInputElement> |  React.ChangeEvent<HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -26,10 +31,10 @@ const Profile = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setUser(formData);
+    handleUpdateProfile(formData);
     setIsEditing(false);
   };
-  const formFields = [
+  const formFields: Array<{ name: keyof UserProfile; required: boolean; type: string }> = [
     { name: "name", required: true, type: "text" },
     { name: "email", required: true, type: "email" },
     { name: "phone", required: true, type: "tel" },
@@ -81,9 +86,9 @@ const Profile = () => {
           </form>
         ) : (
           <div>
-            {Object.keys(user).map((key) => (
+            {user && Object.keys(user).map((key) => (
               <p className="text-gray-700 mb-2" key={key}>
-                <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {user[key]}
+                <strong>{key.charAt(0).toUpperCase() + key.slice(1)}:</strong> {(user[key as keyof UserProfile])}
               </p>
             ))}
             <button
