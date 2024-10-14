@@ -25,6 +25,7 @@ const authSlice = createSlice({
       Cookies.set("token", token);
       Cookies.set("role", role);
       Cookies.set("name", name);
+      Cookies.set("driverId", action.payload.driverId);
     },
     logout: (state) => {
       state.isLoggedIn = false;

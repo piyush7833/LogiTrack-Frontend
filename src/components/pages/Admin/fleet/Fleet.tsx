@@ -193,7 +193,6 @@ const Fleet = () => {
             >
               Add Vehicle
             </button>
-            <Button text="Add vehicle" onClick={(e)=>{handleAddVehicle(e)}} />
           </div>
         </form>
       </DialogBox>

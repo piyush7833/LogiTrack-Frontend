@@ -10,13 +10,14 @@ type propsType = {
   primaryText?:string,
   secondaryText?:string, 
   img?: string;
-  price?: number;
-  time?: string;
+  price?: number | null;
+  time?: string | null;
   driver?: string;
   vehicleType?: string;
   onClick?:()=>void
   onDelete?:()=>void
   onEdit?:()=>void
+  width?: string;
 };
 const Card = ({
   title,
@@ -31,11 +32,11 @@ const Card = ({
   vehicleType,
   primaryText,
   secondaryText,
+  width,
 
 }: propsType) => {
-  console.log(title,"Card")
   return (
-    <div className="px-primaryX py-primaryY rounded-sm flex gap-2 min-h-hCard w-wCard md:w-wmdCard border-[1px] relative hover:cursor-pointer hover:bg-slate-100" onClick={()=>onClick && onClick()}>
+    <div className={`px-primaryX py-primaryY rounded-sm flex gap-2 min-h-hCard w-wCard ${width?`md:w-[${width}]`:"md:w-wmdCard"} border-[1px] relative hover:cursor-pointer hover:bg-slate-100`} onClick={()=>onClick && onClick()}>
       <div className="flex flex-col gap-2 absolute bottom-1 right-2 ">
         {onDelete && <button 
         className="p-1 bg-red-500 text-white rounded-full" 
