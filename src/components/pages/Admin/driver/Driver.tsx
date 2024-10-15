@@ -48,7 +48,7 @@ const Driver = () => {
 
       <div className="flex w-full flex-wrap gap-4 justify-center px-primaryX py-primaryY">
         {drivers.length>0 &&  drivers.map((item:DriverType, index:any) => (
-          <Card key={index} title={item?.name} desc={item?.email} secondaryText={item?.licenseNumber} primaryText={item?.vehicle?"Vehicle :- "+item?.vehicle.model:undefined}  onDelete={()=>{deleteDriver(item?._id)}} onClick={()=>{router.push(`/admin/fleet/${item._id}`)}} />
+          <Card key={index} title={item?.name} desc={item?.email} secondaryText={item?.licenseNumber} primaryText={item?.vehicle?"Vehicle :- "+item?.vehicle.model:undefined}  onDelete={()=>{deleteDriver(item?._id)}} onClick={()=>{router.push(`/admin/driver/${item._id}`)}} />
         ))}
         <button
           onClick={() => setIsOpen(true)}

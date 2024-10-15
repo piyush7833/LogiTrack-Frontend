@@ -3,6 +3,7 @@ import "./globals.css";
 import Providers from "@/store/Provider";
 import ToastProvider from "@/providers/toastProvider";
 import Navbar from "@/components/common/Navbar";
+import SocketProvider from "@/providers/socketProvider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,12 +27,14 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <SocketProvider>
         <ToastProvider>
         <Providers>
           <Navbar />
           {children}
         </Providers>
         </ToastProvider>
+        </SocketProvider>
       </body>
     </html>
   );

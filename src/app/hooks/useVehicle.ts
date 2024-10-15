@@ -73,11 +73,11 @@ const useVehicle = () => {
       console.log(error);
     }
   };
-  const getParticularVehicle = async (id:string) => {
+  const getParticularVehicleAnalytics = async (id:string) => {
     try {
       const res = await sendAuthorizedRequest(
-        BACKEND_API_ENDPOINTS_MAP.VEHICLE + `/delete/${id}`,
-        "DELETE",
+        BACKEND_API_ENDPOINTS_MAP.ADMIN + `/get-vehicle/${id}`,
+        "GET",
         null,
         true,
         false,
@@ -88,13 +88,12 @@ const useVehicle = () => {
       console.log(error);
     }
   };
-
   return {
     addVehicle,
     getVehicle,
     deleteVehicle,
     updateVehicle,
-    getParticularVehicle,
+    getParticularVehicleAnalytics,
     isLoading,
   };
 };

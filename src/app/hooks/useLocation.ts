@@ -65,7 +65,7 @@ const useLocation = () => {
       };
     } catch (error) {
       console.error("Error fetching route details:", error);
-      showToast("error", "Some error occurred while fetching route details");
+      // showToast("error", "Some error occurred while fetching route details");
     }
   };
 

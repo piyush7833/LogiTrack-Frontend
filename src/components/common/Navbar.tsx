@@ -16,13 +16,12 @@ const Navbar = () => {
   const router = useRouter();
   const commonLinks = [
     { name: "Home", path: "/" },
-    { name: "Bookings", path: "/bookings" },
     { name: "Profile", path: "/profile" },
   ];
+  const NoAdminLinks=[{ name: "Bookings", path: "/bookings" },]
   const adminLinks = [
     { name: "Fleet", path: "/admin/fleet" },
     { name: "Drivers", path: "/admin/driver" },
-    { name: "Analytics", path: "/admin/analytics" },
   ];
 
   useEffect(() => {
@@ -33,6 +32,8 @@ const Navbar = () => {
   useEffect(() => {
     if (role === "admin") {
       setLinks([...commonLinks, ...adminLinks]);
+    }else{
+      setLinks([...commonLinks, ...NoAdminLinks]);
     }
   }, [role]);
 
@@ -101,7 +102,12 @@ const Navbar = () => {
       </div>
       
       {showMobileMenu && (
-        <div className="mobile-menu absolute top-full left-0 w-full bg-white flex flex-col items-center gap-4 py-4">
+        <div className="mobile-menu absolute top-0 h-full left-0 w-full bg-white flex flex-col items-center gap-4 py-4 z-50">
+          <button
+            className="top-0 right-0 absolute p-2"
+            onClick={() => setShowMobileMenu(!showMobileMenu)}>
+              X
+            </button>
           {links.map((link, index) => (
             <Link key={index} href={link.path}>
               <p className="hover:text-blue-700"> {link.name}</p>

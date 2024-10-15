@@ -4,26 +4,28 @@ export const BACKEND_API_ENDPOINTS_MAP: Record<string, string> = {
     VEHICLE:"/vehicle",
     DRIVER:"/driver",
     PRICE:"/price",
-    BOOKING:"/booking",
+    BOOKING:"/bookings",
+    ADMIN:"/admin",
+    PAYMENT:"/payment",
 }
 
 export const vehicles = [
     {
-      type: "Mini truck",
+      type: "mini truck",
       desc: "A reliable truck for transporting cargo across short distances.",
       img: "/images/default.png",
       price: null,
       time: null,
     },
     {
-      type: "Truck",
+      type: "truck",
       desc: "A reliable truck for transporting cargo across long distances over a country.",
       img: "/images/default.png",
       price: null,
       time: null,
     },
     {
-      type: "Big truck",
+      type: "big truck",
       desc: "A large truck designed for heavy-duty transportation, capable of carrying substantial loads over long distances.",
       img: "/images/default.png",
       price: null,

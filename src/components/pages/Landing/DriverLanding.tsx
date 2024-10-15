@@ -1,130 +1,189 @@
-// pages/notifications.tsx
+import { useContext, useEffect, useState } from "react";
 import useCookie from "@/app/hooks/useCookie";
-import { useEffect, useRef, useState } from "react";
+import { SocketContext } from "@/providers/socketProvider";
+import BookingModal from "@/components/common/BookingModal";
+import useBooking from "@/app/hooks/useBooking";
 
-interface NotificationMessage {
-  message: NotificationType;
-  userId: string;
-  type?: string;
-}
 
-type NotificationType = {
-  srcName: string;
-  destnName: string;
-  distance: number;
-  price: number;
-  bookingId: string;
-};
 
-const DriverLanding: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
-  const [isConnected, setIsConnected] = useState<boolean>(false);
-  const {getCookie}=useCookie();
-  const ws = useRef<WebSocket | null>(null);
-  const userId = getCookie("driverId"); // Replace with the actual user ID
+const  DriverLanding= () => {
+  const { getCookie } = useCookie();  
+  const { socket,locationSocket } = useContext(SocketContext);
+  const userId = getCookie("driverId");
 
-  console.log(userId,"driverId");
+  const [bookingData, setBookingData] = useState<any>(null);
+  const [notificationData, setNotificationData] = useState<any>(null);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isAccepted, setIsAccepted] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState<string>("accepted");
+  const {updateBookingStatus}=useBooking();
+
   useEffect(() => {
-    // Initialize WebSocket connection
-    ws.current = new WebSocket("ws://localhost:8080?userId=" + userId);
+    if (socket && userId) {
+      socket.emit("registerDriver", userId);
+      console.log("Driver registered:", userId);
 
-    ws.current.onopen = () => {
-      console.log("Connected to WebSocket server");
-      setIsConnected(true);
-    };
-
-    ws.current.onmessage = (event: MessageEvent) => {
-      const notification: NotificationMessage = JSON.parse(event.data);
-
-      if (notification.type === 'bookingAccepted' && notification.userId === userId) {
-        console.log(`Booking ${notification.message.bookingId} accepted successfully`);
-        setNotifications([]);
-      } else if (notification.userId === userId) {
-        setNotifications((prevNotifications) => [
-          ...prevNotifications,
-          notification.message,
-        ]);
-        // Play audio on new notification
+      const playNotificationSound = () => {
         const audio = new Audio("/audio/ring.mp3");
-        audio.play().catch((error) => {
-          console.error("Error playing audio:", error);
-        });
+        audio.play();
+      };
+      console.log(locationSocket,"locations")
+      if(locationSocket){
+        locationSocket.emit("connection")
+        navigator.geolocation.watchPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const roundedLatitude = Math.round(latitude * 100) / 100;
+            const roundedLongitude = Math.round(longitude * 100) / 100;
+            locationSocket.emit("locationUpdate", { driverId: userId, location: { lat: roundedLatitude, lng: roundedLongitude } });
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 10000,
+            timeout: 5000,
+          }
+        );
       }
-    };
 
-    ws.current.onclose = () => {
-      console.log("WebSocket connection closed");
-      setIsConnected(false);
-    };
+      socket.on("newBooking", (data) => {
+        playNotificationSound();
+        setBookingData(data.booking);
+        setNotificationData(data.notification);
+        setIsNotificationOpen(true);
+      });
 
-    // Clean up the WebSocket connection when the component is unmounted
+      socket.on("bookingCancelled", ({ bookingId }) => {
+        console.log(`Booking ${bookingId} has been cancelled.`);
+        if (bookingData && bookingData._id === bookingId) {
+          setBookingData(null);
+          setIsNotificationOpen(false);
+        }
+      });
+    }
+
     return () => {
-      if (ws.current) {
-        ws.current.close();
+      if (socket) {
+        socket.off("newBooking");
+        socket.off("bookingCancelled");
       }
     };
-  }, []);
+  }, [socket, userId, bookingData]);
 
-  // Stop sending notifications for a specific booking
-  const stopNotifications = (bookingId: string) => {
-    if (ws.current && isConnected) {
-      ws.current.send(JSON.stringify({ type: "stop", userId, bookingId }));
-      setNotifications((prevNotifications) =>
-        prevNotifications.filter((notif) => notif.bookingId !== bookingId)
-      );
+  const handleAccept = () => {
+    if (socket && bookingData) {
+      socket.emit("acceptBooking", { bookingId: bookingData._id, driverId: userId });
+      setIsAccepted(true);
+      setBookingData(bookingData);
+      console.log("object",bookingData);
+      setIsNotificationOpen(false);
     }
   };
 
-  // Accept a booking
-  const handleAcceptBooking = (bookingId: string) => {
-    if (ws.current && isConnected) {
-      ws.current.send(JSON.stringify({ type: "accept", userId, bookingId }));
+  const handleReject = () => {
+    if (socket && bookingData) {
+      socket.emit("rejectBooking", { bookingId: bookingData._id, driverId: userId });
+      setBookingData(null);
+      setIsNotificationOpen(false);
+      setIsAccepted(false);
     }
   };
 
+  const handleClose = () => {
+    setBookingData(null);
+    setIsNotificationOpen(false);
+    setIsAccepted(false);
+  };
+  const statusSteps = ["accepted", "collected", "completed", "cancelled"];
   return (
-    <div style={{ padding: "20px" }}>
-      {notifications.length > 0 ? (
-        notifications.map((notification) => (
-          <div
-            key={notification.bookingId}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "20px",
-            }}
-          >
-            <h2>New Booking Notification</h2>
-            <p>
-              <strong>Source:</strong> {notification.srcName}
-            </p>
-            <p>
-              <strong>Destination:</strong> {notification.destnName}
-            </p>
-            <p>
-              <strong>Distance:</strong> {notification.distance} km
-            </p>
-            <p>
-              <strong>Price:</strong> ${notification.price}
-            </p>
-            <button
-              style={{ marginRight: "10px" }}
-              onClick={() => handleAcceptBooking(notification.bookingId)}
-            >
-              Accept
-            </button>
-            <button
-              onClick={() => stopNotifications(notification.bookingId)}
-              disabled={!isConnected}
-            >
-              Reject
-            </button>
+    <div className="relative">
+    {/* Notification Modal */}
+    {isNotificationOpen && (
+      <BookingModal
+        notification={notificationData}
+        onAccept={handleAccept}
+        onReject={handleReject}
+        onClose={handleClose}
+      />
+    )}
+    {(!isNotificationOpen && !isAccepted) && <div className="fixed top-16 right-0 h-[90vh] bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-50 w-1/3">
+      <div className="flex flex-col items-center">
+        <h2 className="text-lg font-bold mb-2">No New Bookings</h2>
+        <p className="text-sm mb-4">Please wait for new bookings</p>
+      </div>
+      </div>
+      }
+    {isAccepted && (
+        <div className="fixed top-16 right-0 h-[90vh] bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-10 w-1/3">
+          <div className="flex flex-col items-center">
+            <h2 className="text-lg font-bold mb-2">Booking Accepted</h2>
+            <p className="text-sm mb-4">{notificationData?.srcName + " -> " + notificationData?.destnName}</p>
+            <div className="w-full">
+              {statusSteps.map((status, index) => (
+                <div key={status} className="flex items-center mb-2">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                      currentStatus === status ? "bg-green-500 border-green-600" : "border-gray-300"
+                    }`}
+                  >
+                    {currentStatus === status && (
+                      <span className="text-white">&#10003;</span> // Tick mark
+                    )}
+                  </div>
+                  <div className={`flex-1 h-1 ${index < statusSteps.length - 1 ? "bg-gray-300" : ""}`} />
+                  <div className="ml-2 text-sm font-semibold">{status.charAt(0).toUpperCase() + status.slice(1)}</div>
+                </div>
+              ))}
+            </div>
+            <div className="w-full space-y-2 mt-4">
+              {currentStatus === "accepted" && (
+                <div
+                  className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
+                  onClick={() => {
+                    if(bookingData){
+                      updateBookingStatus(bookingData._id, "collected");
+                      setCurrentStatus("collected");
+                    }
+                     }}
+                >
+                  <span className="font-semibold">Collected Item</span>
+                </div>
+              )}
+              {currentStatus === "collected" && (
+                <div
+                  className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
+                  onClick={() => {
+                    if(bookingData){
+                      updateBookingStatus(bookingData._id, "completed");
+                      setCurrentStatus("completed");
+                      setIsAccepted(false);
+                    setBookingData(null);
+                    }
+                     }}
+                >
+                  <span className="font-semibold">Dropped Item</span>
+                </div>
+              )}
+              {currentStatus==="accepted" && <div
+                className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
+                onClick={() => {
+                  if(bookingData){
+                    updateBookingStatus(bookingData._id, "cancelled");
+                    setCurrentStatus("cancelled");
+                    setIsAccepted(false);
+                    setBookingData(null);
+                  }
+                   }}
+              >
+                <span className="font-semibold">Cancel Booking</span>
+              </div>}
+            </div>
           </div>
-        ))
-      ) : (
-        <p>No new notifications</p>
-      )}
-    </div>
+        </div>
+    )}
+  </div>
   );
 };
 

@@ -71,11 +71,11 @@ const useDriver = () => {
       console.log(error);
     }
   };
-  const getParticularDriver = async (id:string) => {
+  const getParticularDriverAnalytics = async (id:string) => {
     try {
       const res = await sendAuthorizedRequest(
-        BACKEND_API_ENDPOINTS_MAP.DRIVER + `/delete/${id}`,
-        "DELETE",
+        BACKEND_API_ENDPOINTS_MAP.ADMIN + `/get-driver/${id}`,
+        "GET",
         null,
         true,
         false,
@@ -92,7 +92,7 @@ const useDriver = () => {
     getDriver,
     deleteDriver,
     updateDriver,
-    getParticularDriver,
+    getParticularDriverAnalytics,
     isLoading,
   };
 };
