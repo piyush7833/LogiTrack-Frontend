@@ -11,6 +11,7 @@ type propsType = {
 const AnalyticsDriver = ({ id }: propsType) => {
   const { getParticularDriverAnalytics } = useDriver();
   const name = useSearchParams().get('name');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ const AnalyticsDriver = ({ id }: propsType) => {
         </div>
       )}
     </div>
-  );
+  );  
 };
 
 export default AnalyticsDriver;

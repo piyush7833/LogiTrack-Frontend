@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import useBooking from '@/app/hooks/useBooking';
-import Card from '@/components/common/Card';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
+import BookingCard from './BookingCard';
 
 
 const Booking = () => {
@@ -20,13 +21,11 @@ const Booking = () => {
   }, [])
   
   return (
-   <div className="flex">
-    <div className="flex w-full flex-wrap gap-4 justify-center px-primaryX py-primaryY">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
      {data.map((item:any, index) => (
-        <Card key={index} title={item.srcName + "-> "+ item.destnName} time={item.duration} price={item.price} desc={item.status}    onClick={()=>router.push(`/bookings/${item._id}`)}/>
+        <BookingCard key={index} srcName={item.srcName} destnName={item.destnName} duration={item.duration} price={item.price} status={item.status} startAt={item.startTime} endAt={item.endTime}    onClick={()=>router.push(`/bookings/${item._id}`)}/>
       ))}
      </div>
-   </div>
   )
 }
 

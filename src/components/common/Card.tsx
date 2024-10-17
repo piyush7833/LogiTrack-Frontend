@@ -63,7 +63,7 @@ const Card = ({
       <div className="details w-3/4 flex gap-1">
         <div className="flex justify-between w-2/3 flex-col">
           <p className="font-semibold">{title}</p>
-          <p>{desc}</p>
+          <p className="text-justify">{desc}</p>
         </div>
         {(price || time)&&<div className="flex justify-between w-1/3 flex-col">
           <p className="font-semibold">{price ? `₹${price}` : null}</p>

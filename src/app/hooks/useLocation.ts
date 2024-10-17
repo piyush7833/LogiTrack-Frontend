@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useHttpClient } from "./useHttpClient";
 import { BACKEND_API_ENDPOINTS_MAP } from "../../../config/constantMaps";
-import L from "leaflet";
 import axios from "axios";
 import showToast from "@/components/common/showToast";
 
@@ -49,7 +48,7 @@ const useLocation = () => {
       const segments = route.segments;
       console.log(totalDistance, totalTime, segments);
       // Traffic details can be checked based on segment delays if available
-      const totalDelay = segments.reduce((acc, segment) => acc + (segment.delay || 0), 0);
+      const totalDelay = segments.reduce((acc:any, segment:any) => acc + (segment.delay || 0), 0);
       let trafficInfo
       if (totalDelay < 300) {
         trafficInfo = "traffic-low";

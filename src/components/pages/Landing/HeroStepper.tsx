@@ -8,26 +8,32 @@ type propsType = {
   setIsBookingOpen: React.Dispatch<React.SetStateAction<boolean>>;
   currentStatus: string;
   setCurrentStatus: React.Dispatch<React.SetStateAction<string>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   bookingDatac: any;
-  setBookingDatac: any;
 };
 
 const HeroStepper = ({
   currentStatus,
   setCurrentStatus,
   bookingDatac,
-  setBookingDatac,
   isBookingOpen,
-  setIsBookingOpen,
+
 }: propsType) => {
   const statusSteps = ["pending","accepted", "collected", "completed", "cancelled"];
-  const { updateBookingStatus } = useBooking();
+  const { updateBookingStatus,handlePayment } = useBooking();
+  const Payment = async () => {
+    try {
+      await handlePayment(bookingDatac.price, bookingDatac._id);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   const router = useRouter();
   return (
-    <div>
+    <div className="w-1/3 h-full">
       {isBookingOpen && (
-        <div className="fixed top-16 right-0 h-[90vh] bg-white border border-gray-300 rounded-lg shadow-lg p-6 z-[10000] w-1/3">
-          <div className="flex flex-col items-center">
+        <div className="h-full w-full bg-white  p-6  flex flex-col justify-center">
+          <div className="">
             <h2 className="text-xl font-bold mb-4 text-blue-600">Booking Status</h2>
             <p className="text-sm mb-6 text-gray-500">{bookingDatac?.srcName} &rarr; {bookingDatac?.destnName}</p>
             <div className="w-full">
@@ -90,12 +96,18 @@ const HeroStepper = ({
               {<button
                 className="w-auto py-2 px-4 border border-transparent text-white rounded-lg font-semibold transition-all duration-300 bg-blue-600 hover:bg-blue-700"
                 onClick={() => {
-                  setBookingDatac(null);
-                  setIsBookingOpen(false);
                   router.push("/");
                 }}
               >
                 Book Another
+              </button>}
+              {(!bookingDatac && bookingDatac?.paymentId) && <button
+                className="w-auto py-2 px-4 border border-transparent text-white rounded-lg font-semibold transition-all duration-300 bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  Payment()
+                }}
+              >
+                {`Pay ${bookingDatac?.price}`}
               </button>}
               </div>
           </div>

@@ -40,7 +40,9 @@ const Navbar = () => {
   return (
     <div className="flex justify-between px-primaryX py-primaryY border-[1px] items-center z-10 w-full">
       <div className="logo">
-        <h1>Atlan - Assignment</h1>
+       <Link href={'/'}>
+       <h1 className="font-semibold">Atlan - Assignment</h1>
+       </Link> 
       </div>
       <div className="links hidden md:flex gap-4">
         {links.map((link, index) => (
@@ -51,7 +53,9 @@ const Navbar = () => {
       </div>
       {isLoggedIn ? (
         <div className="btns hidden md:flex gap-4 items-center">
+          <Link href={"/profile"}>
           <p className="text-sm">{name}</p>
+          </Link>
           <Button
             text="Logout"
             cls="secondary"

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
@@ -6,12 +7,12 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import L from "leaflet";
 import "leaflet-routing-machine";
-import Button from "@/components/common/Button";
 import { SocketContext } from "@/providers/socketProvider";
-import useBooking from "@/app/hooks/useBooking";
 import AnimatedModal from "@/components/common/AnimatedModal";
 import HeroStepper from "../../Landing/HeroStepper";
 import DriverStepper from "../../Landing/DriverStepper";
+import useCookie from "@/app/hooks/useCookie";
+import { useRouter } from "next/navigation";
 
 interface LatLng {
   lat: number;
@@ -20,25 +21,23 @@ interface LatLng {
 
 interface propsType {
   isDriver: boolean;
-  bookingDatac:any,
-  setBookingDatac:any
+  bookingDatac: any;
+  setBookingDatac: any;
 }
-const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
+const BookingMap = ({ isDriver, bookingDatac, setBookingDatac }: propsType) => {
   const [locationA, setLocationA] = useState<LatLng | null>(null);
   const [locationB, setLocationB] = useState<LatLng | null>(null);
   const [currentPositionB, setCurrentPositionB] = useState<LatLng | null>(null);
   const [routeCoordinates, setRouteCoordinates] = useState<LatLng[]>([]);
-  const [bookingPrice, setBookingPrice] = useState<number | null>(null);
-  const [isPayemntButton, setIsPayementButton] = useState(false);
   const [driverId, setDriverId] = useState("");
   const [currentStatus, setCurrentStatus] = useState("");
   const [isBookingOpen, setIsBookingOpen] = useState(true);
-  const [alertModalOpen,setAlertModalOpen]=useState(false)
-  const [modalmessage,setModalMessage]=useState("")
-
-  const { handlePayment } = useBooking();
-
+  const [alertModalOpen, setAlertModalOpen] = useState(false);
+  const [modalmessage, setModalMessage] = useState("");
+  const { getCookie } = useCookie();
+  const currentDriverId = getCookie("driverId");
   const { socket, locationSocket } = useContext(SocketContext);
+  const router = useRouter();
   // const {createBooking}=useBooking()
   const customMarkerIcon = new L.Icon({
     iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
@@ -54,24 +53,47 @@ const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
   const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if(bookingDatac && currentPositionB==null){
-      setBookingPrice(bookingDatac.price)
+    if (bookingDatac && currentPositionB == null) {
       setLocationA({
         lat: bookingDatac.src.coordinates[1],
         lng: bookingDatac.src.coordinates[0],
       });
+      setLocationB({
+        lat: bookingDatac.destn.coordinates[1],
+        lng: bookingDatac.destn.coordinates[0],
+      });
+      if (bookingDatac.status == "accepted") {
         setLocationB({
-            lat: bookingDatac.destn.coordinates[1],
-            lng: bookingDatac.destn.coordinates[0],
+          lat: bookingDatac.src.coordinates[1],
+          lng: bookingDatac.src.coordinates[0],
         });
-        if(bookingDatac.status!=="completed" && bookingDatac.status!=="cancelled"){
-        setDriverId(bookingDatac.driverId)
-        }
-        setCurrentStatus(bookingDatac.status)
-
+      }
+      if (bookingDatac.status == "collected") {
+        setLocationB({
+          lat: bookingDatac.destn.coordinates[1],
+          lng: bookingDatac.destn.coordinates[0],
+        });
+      }
+      if (bookingDatac.status == "completed") {
+        setLocationB({
+          lat: bookingDatac.destn.coordinates[1],
+          lng: bookingDatac.destn.coordinates[0],
+        });
+        setLocationA({
+          lat: bookingDatac.src.coordinates[1],
+          lng: bookingDatac.src.coordinates[0],
+        });
+        setCurrentPositionB(null);
+      }
+      if (
+        bookingDatac.status !== "completed" &&
+        bookingDatac.status !== "cancelled"
+      ) {
+        setDriverId(bookingDatac.driverId);
+      }
+      setCurrentStatus(bookingDatac.status);
     }
-  }, [bookingDatac]);
-
+  }, [bookingDatac, currentStatus]);
 
   useEffect(() => {
     const script = document.createElement("script");
@@ -116,14 +138,16 @@ const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
       }).addTo(map);
 
       routingControl.on("routesfound", (e: L.Routing.RoutingResultEvent) => {
-        const bounds = L.latLngBounds(e.routes[0].coordinates);
-        map.fitBounds(bounds);
+        if (e.routes[0].coordinates) {
+          const bounds = L.latLngBounds(e.routes[0].coordinates);
+          map.fitBounds(bounds);
 
-        const coords = e.routes[0].coordinates.map((coord) => ({
-          lat: coord.lat,
-          lng: coord.lng,
-        }));
-        setRouteCoordinates(coords);
+          const coords = e.routes[0].coordinates.map((coord) => ({
+            lat: coord.lat,
+            lng: coord.lng,
+          }));
+          setRouteCoordinates(coords);
+        }
       });
 
       return () => {
@@ -159,7 +183,7 @@ const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
     }
   }, [currentPositionB]);
 
-
+  // Update driver location every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (locationSocket && driverId && bookingDatac) {
@@ -181,20 +205,15 @@ const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
     if (socket) {
       socket.on("bookingCollected", ({ booking }) => {
         if (bookingDatac && booking._id === bookingDatac._id) {
-          if(!isDriver){
-            setAlertModalOpen(true)
-            setModalMessage("Item has been collected")
+          if (!isDriver) {
+            setAlertModalOpen(true);
+            setModalMessage("Item has been collected");
           }
           setCurrentStatus("collected");
           setLocationB({
-            lat: booking.destn.coordinates[1],
-            lng: booking.destn.coordinates[0],
+            lat: bookingDatac.destn.coordinates[1],
+            lng: bookingDatac.destn.coordinates[0],
           });
-          console.log(
-            booking.destn.coordinates[0],
-            booking.destn.coordinates[1],
-            "booking"
-          );
         }
       });
 
@@ -205,46 +224,97 @@ const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
     }
   }, [socket, bookingDatac]);
 
-  const Payment = async () => {
-    try {
-      await handlePayment(bookingPrice, bookingDatac._id);
-      setBookingPrice(null);
-      setIsPayementButton(false);
-    } catch (error) {
-      console.log(error);
+  if (locationSocket) {
+    if (isDriver) {
+      locationSocket.emit("connection");
+      let lastLatitude: number | null = null;
+      let lastLongitude: number | null = null;
+
+      navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const roundedLatitude = Math.round(latitude * 100) / 100;
+          const roundedLongitude = Math.round(longitude * 100) / 100;
+
+          if (
+            roundedLatitude !== lastLatitude ||
+            roundedLongitude !== lastLongitude
+          ) {
+            locationSocket.emit("locationUpdate", {
+              driverId: currentDriverId,
+              location: { lat: roundedLatitude, lng: roundedLongitude },
+            });
+            lastLatitude = roundedLatitude;
+            lastLongitude = roundedLongitude;
+          }
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 10000,
+          timeout: 5000,
+        }
+      );
     }
-  };
+  }
+
   // Listen for booking acceptance
   if (socket) {
+    socket.on("bookingAccepted", ({ booking, driverName, driverId }) => {
+      if (bookingDatac && booking._id === bookingDatac._id) {
+        if (!isDriver) {
+          setAlertModalOpen(true);
+          setModalMessage(`${driverName} has accepted your booking`);
+        }
+
+        setBookingDatac(booking);
+        setDriverId(driverId);
+        setCurrentStatus("accepted");
+        setIsBookingOpen(true);
+        setLocationB({
+          lat: bookingDatac.src.coordinates[1],
+          lng: bookingDatac.src.coordinates[0],
+        });
+      }
+    });
+    socket.on("bookingNotAccepted", ({ booking }) => {
+      if (bookingDatac && booking._id === bookingDatac._id) {
+        if (!isDriver) {
+          setAlertModalOpen(true);
+          setModalMessage("No driver accepted your booking");
+        }
+        setCurrentStatus("rejected");
+        router.push("/bookings");
+      }
+    });
     socket.on("bookingCancelled", ({ booking }) => {
       if (bookingDatac && booking._id === bookingDatac._id) {
-        if(!isDriver){
-          setAlertModalOpen(true)
-          setModalMessage("Booking has been cancelled")
+        if (!isDriver) {
+          setAlertModalOpen(true);
+          setModalMessage("Booking has been cancelled");
         }
+        console.log("Booking Cancelled");
         setDriverId("");
-        setBookingPrice(null);
         setCurrentStatus("cancelled");
-        setLocationA(null);
-        setLocationB(null);
-        setIsBookingOpen(false);
-        setCurrentPositionB(null);
+        setBookingDatac(booking);
       }
     });
     socket.on("bookingCompleted", ({ booking }) => {
       if (bookingDatac && booking._id === bookingDatac._id) {
-        if(!isDriver){
-          setAlertModalOpen(true)
-          setModalMessage("Item has been delivered")
+        if (!isDriver) {
+          setAlertModalOpen(true);
+          setModalMessage("Item has been delivered");
         }
-        setIsPayementButton(true);
+        setBookingDatac(booking);
         setDriverId("");
         setCurrentStatus("completed");
-        setIsBookingOpen(false);
       }
     });
   }
 
+  // Listen for driver location updates for user
   if (locationSocket) {
     locationSocket.on("driverLocationUpdate", ({ location, bookingIds }) => {
       if (bookingIds == bookingDatac?._id) {
@@ -259,38 +329,28 @@ const BookingMap = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
       <AnimatedModal
         message={modalmessage}
         isVisible={alertModalOpen}
-        onClose={()=>setAlertModalOpen(false)}
+        onClose={() => setAlertModalOpen(false)}
       />
 
-      {!isDriver && !isBookingOpen && (
-        <div className="md:w-1/3 w-full p-4 bg-gray-100 relative z-20 flex flex-col justify-between">
-          {isPayemntButton && (
-            <Button
-              text={`Pay ${bookingPrice}`}
-              onClick={() => {
-                Payment();
-              }}
-            />
-          )}
-        </div>
+      {!isDriver && (
+        <HeroStepper
+          bookingDatac={bookingDatac}
+          currentStatus={currentStatus}
+          setCurrentStatus={setCurrentStatus}
+          isBookingOpen={isBookingOpen}
+          setIsBookingOpen={setIsBookingOpen}
+        />
       )}
-      {!isDriver && <HeroStepper
-        bookingDatac={bookingDatac}
-        setBookingDatac={setBookingDatac}
-        currentStatus={currentStatus}
-        setCurrentStatus={setCurrentStatus}
-        isBookingOpen={isBookingOpen}
-        setIsBookingOpen={setIsBookingOpen}
-      />}
-      {isDriver && <DriverStepper
-        bookingDatac={bookingDatac}
-        setBookingDatac={setBookingDatac}
-        currentStatus={currentStatus}
-        setCurrentStatus={setCurrentStatus}
-        isBookingOpen={isBookingOpen}
-        setIsBookingOpen={setIsBookingOpen}
-      />}
-      <div className="md:w-2/3 w-full h-full relative">
+      {isDriver && (
+        <DriverStepper
+          bookingDatac={bookingDatac}
+          setBookingDatac={setBookingDatac}
+          currentStatus={currentStatus}
+          setCurrentStatus={setCurrentStatus}
+          isBookingOpen={isBookingOpen}
+        />
+      )}
+      <div className="md:w-2/3 w-full h-full">
         <MapContainer
           center={[28.7175691552515, 77.23654986073308]}
           zoom={13}

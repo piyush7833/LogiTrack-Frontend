@@ -14,21 +14,20 @@ type propsType={
     vehicleData:any,
     setBookingData:any,
     setDrivers:any,
-    setBookingPrice:any
+    isDriver:boolean
 }
 
-const Vehicles = ({locationA,locationB,distance,bookingDatac,inputValueA,inputValueB,vehicleData,setBookingData,setBookingPrice,setDrivers}:propsType) => {
+const Vehicles = ({locationA,locationB,distance,bookingDatac,inputValueA,inputValueB,vehicleData,setBookingData,setDrivers,isDriver}:propsType) => {
     const {createBooking}=useBooking()
     const handleBooking=async(data:any)=>{
         try {
           console.log(data)
           const response =await createBooking(data)
           console.log(response)
-          if(response){
+          if(response && response.data && !isDriver){
             setBookingData(response.data.booking);
             console.log(response.data.booking)
             console.log(bookingDatac)
-            setBookingPrice(response.data.booking.price)
             setDrivers(response.data.drivers)
           }
         } catch (error) {

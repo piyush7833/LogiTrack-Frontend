@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
@@ -12,12 +13,13 @@ import { vehicles } from "../../../../config/constantMaps";
 import useLocation from "@/app/hooks/useLocation";
 import { formatTime } from "@/utils/utils";
 import { SocketContext } from "@/providers/socketProvider";
-import HeroStepper from "./HeroStepper";
-import useBooking from "@/app/hooks/useBooking";
 import Search from "./Search";
 import Vehicles from "./Vehicles";
 import DriverCard from "./DriverCard";
 import AnimatedModal from "@/components/common/AnimatedModal";
+import { useRouter } from "next/navigation";
+import DriverLanding from "./DriverLanding";
+import useCookie from "@/app/hooks/useCookie";
 
 interface LatLng {
   lat: number;
@@ -39,37 +41,29 @@ interface propsType {
 const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
   const [locationA, setLocationA] = useState<LatLng | null>(null);
   const [locationB, setLocationB] = useState<LatLng | null>(null);
-  const [currentPositionB, setCurrentPositionB] = useState<LatLng | null>(null);
   const [routeCoordinates, setRouteCoordinates] = useState<LatLng[]>([]);
   const [vehicleData, setVehicleData] = useState<vehicleData[]>(vehicles);
   const [inputValueA, setInputValueA] = useState<string>("");
   const [inputValueB, setInputValueB] = useState<string>("");
   const [distance, setDistance] = useState<number>(0);
   const [traffic, setTraffic] = useState<string>("");
-  const [bookingPrice, setBookingPrice] = useState<number | null>(null);
-  const [isPayemntButton, setIsPayementButton] = useState(false);
-  const [driverId, setDriverId] = useState("");
-  const [currentStatus, setCurrentStatus] = useState("");
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [drivers, setDrivers] = useState([]);
   const [alertModalOpen,setAlertModalOpen]=useState(false)
   const [modalmessage,setModalMessage]=useState("")
 
+  
   const { getPrices } = usePrice();
   const { getRouteDetails, isRaining } = useLocation();
-  const { handlePayment } = useBooking();
-
-  const { socket, locationSocket } = useContext(SocketContext);
+  const {getCookie}=useCookie()
+  const router=useRouter()
+  const { socket } = useContext(SocketContext);
+  const currentDriverId=getCookie("driverId")
   const customMarkerIcon = new L.Icon({
     iconUrl: "https://unpkg.com/leaflet@1.9.3/dist/images/marker-icon.png",
     iconSize: [25, 41],
     iconAnchor: [12, 41],
     popupAnchor: [1, -34],
-  });
-  const truckIcon = new L.Icon({
-    iconUrl: "/images/truck.png", // Replace with your truck SVG path
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
   });
   const mapRef = useRef<L.Map | null>(null);
 
@@ -87,12 +81,7 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
   useEffect(() => {
     if (mapRef.current && locationA && locationB) {
       const map = mapRef.current;
-      const waypoints = currentPositionB
-        ? [
-            L.latLng(locationB.lat, locationB.lng),
-            L.latLng(currentPositionB.lat, currentPositionB.lng),
-          ]
-        : [
+      const waypoints =  [
             L.latLng(locationA.lat, locationA.lng),
             L.latLng(locationB.lat, locationB.lng),
           ];
@@ -116,48 +105,26 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
       }).addTo(map);
 
       routingControl.on("routesfound", (e: L.Routing.RoutingResultEvent) => {
-        const bounds = L.latLngBounds(e.routes[0].coordinates);
-        map.fitBounds(bounds);
+        if (e.routes[0].coordinates) {
+          const bounds = L.latLngBounds(e.routes[0].coordinates);
+          map.fitBounds(bounds);
 
-        const coords = e.routes[0].coordinates.map((coord) => ({
-          lat: coord.lat,
-          lng: coord.lng,
-        }));
-        setRouteCoordinates(coords);
+          const coords = e.routes[0].coordinates.map((coord) => ({
+            lat: coord.lat,
+            lng: coord.lng,
+          }));
+          setRouteCoordinates(coords);
+        }
       });
 
       return () => {
         map.removeControl(routingControl);
       };
     }
-  }, [locationA, locationB, currentPositionB]);
+  }, [locationA, locationB]);
 
-  useEffect(() => {
-    if (currentPositionB && mapRef.current) {
-      const map = mapRef.current;
-      map.flyTo([currentPositionB.lat, currentPositionB.lng], 13, {
-        duration: 2,
-      });
-    }
-  }, [currentPositionB]);
 
-  // Follow currentPositionB as it moves
-  useEffect(() => {
-    if (currentPositionB && mapRef.current) {
-      const map = mapRef.current;
-      map.panTo([currentPositionB.lat, currentPositionB.lng], {
-        animate: true,
-        duration: 1,
-      });
-    }
-  }, [currentPositionB]);
 
-  useEffect(() => {
-    if (currentPositionB) {
-      // Zoom to the location of Marker B
-      mapRef.current?.setView([currentPositionB.lat, currentPositionB.lng], 15);
-    }
-  }, [currentPositionB]);
 
   useEffect(() => {
     if (locationA && locationB) {
@@ -176,55 +143,13 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
     }
   }, [locationA, locationB]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (locationSocket && driverId && bookingDatac) {
-        if (bookingDatac && bookingDatac && bookingDatac._id) {
-          locationSocket.emit("updateBookedDriverLocation", {
-            driverId,
-            bookingId: bookingDatac._id,
-            locationB,
-          });
-        }
-      }
-    }, 5000);
 
-    return () => clearInterval(interval);
-  }, [locationSocket, driverId, bookingDatac?._id]);
 
-  // Listen for bookingCollected event
-  useEffect(() => {
-    if (socket) {
-      socket.on("bookingCollected", ({ booking }) => {
-        if (bookingDatac && booking._id === bookingDatac._id) {
-          if(!isDriver){
-            setAlertModalOpen(true)
-            setModalMessage("Item has been collected")
-          }
-          setCurrentStatus("collected");
-          setLocationB({
-            lat: booking.destn.coordinates[1],
-            lng: booking.destn.coordinates[0],
-          });
-          console.log(
-            booking.destn.coordinates[0],
-            booking.destn.coordinates[1],
-            "booking"
-          );
-        }
-      });
-
-      // Clean up the socket listener
-      return () => {
-        socket.off("bookingCollected");
-      };
-    }
-  }, [socket, bookingDatac]);
 
   const handleGetPrice = () => {
     if (locationA && locationB) {
       isRaining(locationA.lat, locationA.lng).then((res) => {
-        getPrices(distance, traffic, res as boolean).then((res) => {
+        getPrices(distance, traffic,res as boolean,locationA).then((res) => {
           setVehicleData((prevVehicleData) =>
             prevVehicleData.map((vehicle) => ({
               ...vehicle,
@@ -236,33 +161,22 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
     }
   };
 
-  const Payment = async () => {
-    try {
-      await handlePayment(bookingPrice, bookingDatac._id);
-      setBookingDatac(null);
-      setBookingPrice(null);
-      setIsPayementButton(false);
-    } catch (error) {
-      console.log(error);
-    }
-  };
   // Listen for booking acceptance
   if (socket) {
-    socket.on("bookingAccepted", ({ booking, driverName, driverId }) => {
+    socket.on("bookingAccepted", ({ booking, driverName }) => {
+      console.log(booking,"booking")
+      console.log(bookingDatac,"bookingDatac")
       if (bookingDatac && booking._id === bookingDatac._id) {
         if(!isDriver){
           setAlertModalOpen(true)
           setModalMessage( `${driverName} has accepted your booking`)
+          router.push(`/bookings/${bookingDatac._id}`)
         }
-        if(isDriver){
-          setLocationB(booking.src);
+        if(isDriver && bookingDatac.driverId===currentDriverId){
+          console.log(booking, currentDriverId)
+          router.push(`/bookings/${bookingDatac._id}`)
         }
-        setBookingDatac(booking);
-        setDriverId(driverId);
-        setLocationB(locationA);
-        setDrivers([]);
-        setCurrentStatus("accepted");
-        setIsBookingOpen(true);
+        console.log("object1")
       }
     });
     socket.on("bookingNotAccepted", ({ booking }) => {
@@ -272,46 +186,8 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
           setModalMessage("No driver accepted your booking")
         }
         setBookingDatac(null);
-        setBookingPrice(null);
         setIsBookingOpen(false);
         setDrivers([]);
-      }
-    });
-    socket.on("bookingCancelled", ({ booking }) => {
-      if (bookingDatac && booking._id === bookingDatac._id) {
-        if(!isDriver){
-          setAlertModalOpen(true)
-          setModalMessage("Booking has been cancelled")
-        }
-        setBookingDatac(null);
-        setBookingPrice(null);
-        setDriverId("");
-        setCurrentStatus("cancelled");
-        setLocationA(null);
-        setLocationB(null);
-        setIsBookingOpen(false);
-        setCurrentPositionB(null);
-      }
-    });
-    socket.on("bookingCompleted", ({ booking }) => {
-      if (bookingDatac && booking._id === bookingDatac._id) {
-        if(!isDriver){
-          setAlertModalOpen(true)
-          setModalMessage("Item has been delivered")
-        }
-        setIsPayementButton(true);
-        setDriverId("");
-        setCurrentStatus("completed");
-        setIsBookingOpen(false);
-      }
-    });
-  }
-
-  if (locationSocket) {
-    locationSocket.on("driverLocationUpdate", ({ location, bookingIds }) => {
-      if (bookingIds == bookingDatac?._id) {
-        // console.log(location,"location")
-        setCurrentPositionB(location);
       }
     });
   }
@@ -323,7 +199,11 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
         isVisible={alertModalOpen}
         onClose={()=>setAlertModalOpen(false)}
       />
-
+      {isDriver && <DriverLanding
+          bookingDatac={bookingDatac}
+          setBookingDatac={setBookingDatac}
+          isDriver={isDriver}
+        />}
       {!isDriver && !isBookingOpen && (
         <div className="md:w-1/3 w-full p-4 bg-gray-100 relative z-20 flex flex-col justify-between">
           <Search
@@ -348,7 +228,7 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
               ))}
             </div>
           )}
-          {drivers.length===0 && <Vehicles
+          {drivers.length===0 &&  !isDriver && <Vehicles
             locationA={locationA}
             locationB={locationB}
             distance={distance}
@@ -357,11 +237,11 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
             inputValueB={inputValueB}
             vehicleData={vehicleData}
             setBookingData={setBookingDatac}
-            setBookingPrice={setBookingPrice}
             setDrivers={setDrivers}
+            isDriver={isDriver}
           />}
 
-          {!isPayemntButton && (
+          {(
             <Button
               text="Get Price"
               onClick={() => {
@@ -370,25 +250,8 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
               disabled={locationA == null || locationB == null || distance == 0}
             />
           )}
-          {isPayemntButton && (
-            <Button
-              text={`Pay ${bookingPrice}`}
-              onClick={() => {
-                Payment();
-              }}
-            />
-          )}
         </div>
       )}
-      <HeroStepper
-        isDriver={isDriver}
-        setBookingDatac={setBookingDatac}
-        bookingDatac={bookingDatac}
-        currentStatus={currentStatus}
-        setCurrentStatus={setCurrentStatus}
-        isBookingOpen={isBookingOpen}
-        setIsBookingOpen={setIsBookingOpen}
-      />
       <div className="md:w-2/3 w-full h-full relative">
         <MapContainer
           center={[28.7175691552515, 77.23654986073308]}
@@ -403,7 +266,7 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
-          {locationA && !currentPositionB && (
+          {locationA && (
             <Marker
               position={[locationA.lat, locationA.lng]}
               icon={customMarkerIcon}
@@ -413,12 +276,6 @@ const Hero = ({ isDriver,bookingDatac,setBookingDatac }: propsType) => {
             <Marker
               position={[locationB.lat, locationB.lng]}
               icon={customMarkerIcon}
-            />
-          )}
-          {currentPositionB && (
-            <Marker
-              position={[currentPositionB.lat, currentPositionB.lng]}
-              icon={truckIcon}
             />
           )}
           {routeCoordinates.length > 0 && (

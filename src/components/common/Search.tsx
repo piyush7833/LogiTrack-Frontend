@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { Fragment, useState } from "react";
 import useLocation from "@/app/hooks/useLocation";
-import { platform } from "os";
 
 type propsType={
   onSelect:(location:any)=>void,
@@ -13,7 +13,9 @@ const Search = ({onSelect,placeholder,listName}:propsType) => {
   const { getSuggestions } = useLocation();
   const fetchSuggestions = async (query: string) => {
     const res= await getSuggestions(query);
-    res && setSuggestions(res.data);
+    if(res){
+      setSuggestions(res.data);
+    }
   };
   return (
     <Fragment>

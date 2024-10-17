@@ -11,6 +11,7 @@ const toastBgColor = {
   error: "bg-red-100",
   warning: "bg-yellow-50",
   loading: "bg-white",
+  info: "bg-blue-100",
 };
 
 const toastTextColor = {
@@ -18,6 +19,7 @@ const toastTextColor = {
   error: "text-red-600",
   warning: "text-yellow-600",
   loading: "text-gray-700",
+  info: "text-blue-600",
 };
 
 const toastIcons = {
@@ -28,79 +30,16 @@ const toastIcons = {
   loading: <Spinner/>,
 };
 
+type ToastType = 'success' | 'error' | 'warning' | 'loading' | 'info';
+
 const showToast = (
-  type: string,
+  type: ToastType,
   message: string,
   promise?: Promise<any>,
   loadingMsg?: any,
   duration?: any
 ) => {
-  console.log("showing toast")
-  toast.dismiss(); // to dismiss the previous toast if no time or no autoclose
-  if (promise) {
-    // Show loading indicator
-    const loadingId = toast.loading(
-      <div
-        className={`flex flex-col gap-1 px-8 py-5 -m-2 ${toastTextColor[type]} ${toastBgColor[type]}`}
-      >
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <div>{toastIcons.loading}</div>
-            <div className="text-lg">{type.charAt(0).toUpperCase() + type.slice(1)}</div>
-          </div>
-          <div onClick={() => toast.dismiss()} className="cursor-pointer">
-            <RxCross2 size={20} color="#999999" />
-          </div>
-        </div>
-        <p className="text-sm leading-4">{loadingMsg || "Loading"}</p>
-      </div>,
-      {
-        icon: false,
-        closeButton: false,
-        style: {
-          padding: 0,
-          borderRadius: "5px",
-        },
-        position: "bottom-right",
-        autoClose: false, // Do not auto-close until the promise resolves or rejects
-      }
-    );
 
-    promise
-      .then((result) => {
-        // FOR SHOWING NEW TOAST
-        toast.dismiss(loadingId);
-
-        toast.success(
-          <div className={`flex flex-col gap-1 px-8 py-5 -m-2 ${toastTextColor.success} ${toastBgColor.success}`}>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <div>{toastIcons.success}</div>
-                <div className="text-lg">Success</div>
-              </div>
-              <div onClick={() => toast.dismiss()} className="cursor-pointer">
-                <RxCross2 size={20} color="#999999" />
-              </div>
-            </div>
-            <p className="text-sm leading-4">{message}</p>
-          </div>,
-          {
-            icon: false,
-            closeButton: false,
-            style: {
-              padding: 0,
-              borderRadius: "5px",
-            },
-            position: "bottom-right",
-            autoClose: 3000,
-          }
-        );
-      })
-      .catch((error) => {
-        toast.dismiss(loadingId); //already handled in useHTTPclient
-      });
-  }
-   else {
     // Handle non-promise case as before
     if (duration) toast.dismiss();
     (toast as any)[type](
@@ -130,7 +69,6 @@ const showToast = (
         autoClose: duration ? false : 3000,
       }
     );
-  }
 };
 
 export default showToast;

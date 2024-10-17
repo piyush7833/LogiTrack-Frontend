@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import useBooking from "@/app/hooks/useBooking";
 import React from "react";
@@ -8,7 +9,6 @@ type propsType = {
   bookingDatac: any;
   setBookingDatac: any;
   isBookingOpen: boolean;
-  setIsBookingOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const DriverStepper = ({
@@ -17,16 +17,16 @@ const DriverStepper = ({
   bookingDatac,
   setBookingDatac,
   isBookingOpen,
-  setIsBookingOpen,
 }: propsType) => {
   const statusSteps = ["pending", "accepted", "collected", "completed", "cancelled"];
 
   const {updateBookingStatus}=useBooking();
 
   return (
-    <div>
-      {isBookingOpen && <div className="fixed top-16 right-0 h-[90vh] bg-white border border-gray-300 rounded-lg shadow-lg p-6 z-[1000] w-1/3">
-        <div className="flex flex-col items-center">
+    <div className="w-1/3 h-auto">
+      {isBookingOpen && 
+      <div className="w-full right-0 h-full bg-white p-6 flex flex-col justify-center">
+        <div className="">
           <h2 className="text-xl font-bold mb-4 text-blue-600">Booking Status</h2>
           <p className="text-sm mb-6 text-gray-500">
             {bookingDatac?.srcName} &rarr; {bookingDatac?.destnName}
@@ -74,12 +74,13 @@ const DriverStepper = ({
             <p className="text-sm text-gray-700"><strong>Vehicle Model:</strong> {bookingDatac?.vehicleId?.model || "N/A"}</p>
             <p className="text-sm text-gray-700"><strong>Vehicle Type:</strong> {bookingDatac?.vehicleId?.type || "N/A"}</p>
             <p className="text-sm text-gray-700"><strong>Total Distance:</strong> {bookingDatac?.distance || "N/A"}</p>
+            <p className="text-sm text-gray-700"><strong>Online Paid:</strong> {bookingDatac?.paymentId ? "Yes" : "No"}</p>
           </div>
           {/* Action Buttons */}
-          <div className="w-full space-y-4 mt-6">
+          <div className="w-full space-y-4 mt-6 space-x-3">
             {currentStatus === "accepted" && (
               <button
-                className="w-full py-2 px-4 border border-blue-600 text-blue-600 rounded-lg font-semibold transition-all duration-300 bg-white hover:bg-blue-50"
+                className="w-auto py-2 px-4 border border-blue-600 text-blue-600 rounded-lg font-semibold transition-all duration-300 bg-white hover:bg-blue-50"
                 onClick={() => {
                   if (bookingDatac) {
                     updateBookingStatus(bookingDatac._id, "collected");
@@ -92,12 +93,12 @@ const DriverStepper = ({
             )}
             {currentStatus === "collected" && (
               <button
-                className="w-full py-2 px-4 border border-blue-600 text-blue-600 rounded-lg font-semibold transition-all duration-300 bg-white hover:bg-blue-50"
+                className="w-auto py-2 px-4 border border-blue-600 text-blue-600 rounded-lg font-semibold transition-all duration-300 bg-white hover:bg-blue-50"
                 onClick={() => {
                   if (bookingDatac) {
                     updateBookingStatus(bookingDatac._id, "completed");
                     setCurrentStatus("completed");
-                    setIsBookingOpen(false);
+                    // setIsBookingOpen(false);
                     setBookingDatac(null);
                   }
                 }}
@@ -107,12 +108,12 @@ const DriverStepper = ({
             )}
             {currentStatus === "accepted" && (
               <button
-                className="w-full py-2 px-4 border border-red-600 text-red-600 rounded-lg font-semibold transition-all duration-300 bg-white hover:bg-red-50"
+                className="w-auto py-2 px-4 border border-red-600 text-red-600 rounded-lg font-semibold transition-all duration-300 bg-white hover:bg-red-50"
                 onClick={() => {
                   if (bookingDatac) {
                     updateBookingStatus(bookingDatac._id, "cancelled");
                     setCurrentStatus("cancelled");
-                    setIsBookingOpen(false);
+                    // setIsBookingOpen(false);
                     setBookingDatac(null);
                   }
                 }}
@@ -122,7 +123,8 @@ const DriverStepper = ({
             )}
           </div>
         </div>
-      </div>}
+      </div>
+      }
     </div>
   );
 };

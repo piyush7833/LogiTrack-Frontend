@@ -86,13 +86,46 @@ const useDriver = () => {
       console.log(error);
     }
   };
+  const getAllDriverAnalytics = async () => {
+    try {
+      const res = await sendAuthorizedRequest(
+        BACKEND_API_ENDPOINTS_MAP.ADMIN + `/get-all-driver`,
+        "GET",
+        null,
+        true,
+        false,
+      );
+      return res;
+    } catch (error: any) {
+      // showToast("error", "Some error occurred");
+      console.log(error);
+    }
+  };
+
+  const getParticularDriver = async (id:string) => {
+    try {
+      const res = await sendAuthorizedRequest(
+        BACKEND_API_ENDPOINTS_MAP.DRIVER + `/get/${id}`,
+        "GET",
+        null,
+        true,
+        false,
+      );
+      return res;
+    } catch (error: any) {
+      // showToast("error", "Some error occurred");
+      console.log(error);
+    }
+  }
 
   return {
     addDriver,
     getDriver,
+    getParticularDriver,
     deleteDriver,
     updateDriver,
     getParticularDriverAnalytics,
+    getAllDriverAnalytics,
     isLoading,
   };
 };

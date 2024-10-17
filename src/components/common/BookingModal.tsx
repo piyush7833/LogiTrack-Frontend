@@ -1,13 +1,14 @@
 import React from "react";
 
 interface BookingModalProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   notification: any;
   onAccept: () => void;
   onReject: () => void;
   onClose: () => void;
 }
 
-const BookingModal: React.FC<BookingModalProps> = ({  onAccept, onReject, onClose,notification }) => {
+const BookingModal= ({  onAccept, onReject, onClose,notification }:BookingModalProps) => {
   return (
     <div className="fixed bottom-4 transform right-0 z-50 bg-white p-6 shadow-lg rounded-lg w-96">
       <div className="modal-content">

@@ -9,13 +9,12 @@ type UserProfile = {
   name: string;
   email: string;
   phone: string;
-  avatar?: string; // Assuming you may have an avatar URL
 };
 
 const Profile = () => {
   const { handleGetOwnProfile, handleUpdateProfile } = useAuth();
   const selectUserProfile = createSelector(
-    (state: { auth: { user: UserProfile | null } }) => state.auth.user,
+    (state: { auth: { user: UserProfile | null; } }) => state.auth.user,
     (user) => ({
       name: user?.name || "",
       email: user?.email || "",
@@ -47,11 +46,11 @@ const Profile = () => {
   };
 
   const formFields: Array<{ name: keyof UserProfile; required: boolean; type: string }> = [
-    { name: "name", required: true, type: "text" },
-    { name: "email", required: true, type: "email" },
-    { name: "phone", required: true, type: "tel" },
+    { name: "name", required: false, type: "text" },
+    { name: "email", required: false, type: "email" },
+    { name: "phone", required: false, type: "tel" },
   ];
-
+  
   return (
     <div className="p-6 max-w-lg mx-auto bg-gray-100 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">User Profile</h1>
@@ -60,7 +59,7 @@ const Profile = () => {
         <div className="flex items-center mb-6">
           <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-blue-500">
             <Image 
-              src={user?.avatar || "/images/profile.jpg"} // Default avatar if none
+              src={"/images/profile.jpg"} // Default avatar if none
               alt="User Avatar"
               layout="fill"
               className="object-cover"

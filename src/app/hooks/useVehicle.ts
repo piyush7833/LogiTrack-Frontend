@@ -88,12 +88,28 @@ const useVehicle = () => {
       console.log(error);
     }
   };
+  const getAllVehicleAnalytics = async () => {
+    try {
+      const res = await sendAuthorizedRequest(
+        BACKEND_API_ENDPOINTS_MAP.ADMIN + `/get-all-vehicle`,
+        "GET",
+        null,
+        true,
+        false,
+      );
+      return res;
+    } catch (error: any) {
+      // showToast("error", "Some error occurred");
+      console.log(error);
+    }
+  };
   return {
     addVehicle,
     getVehicle,
     deleteVehicle,
     updateVehicle,
     getParticularVehicleAnalytics,
+    getAllVehicleAnalytics,
     isLoading,
   };
 };

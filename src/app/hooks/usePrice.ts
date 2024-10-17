@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BACKEND_API_ENDPOINTS_MAP } from "../../../config/constantMaps";
 import axios from "axios";
 import showToast from "@/components/common/showToast";
@@ -12,17 +13,17 @@ const usePrice = () => {
     }
   })
 
-  const getPrices = async (distances:number,traffic:string,isRaining:boolean) => {
+  const getPrices = async (distances:number,traffic:string,isRaining:boolean,src:any) => {
     try {
-      console.log("object")
-        const res =await axiosInstance.get("/get?distance="+distances+"&traffic="+traffic+"&isRaining="+isRaining)
+      console.log(src.lat,src.lng)
+        const res =await axiosInstance.get("/get?distance="+distances+"&traffic="+traffic+"&isRaining="+isRaining+"&lat="+src.lat+"&lng="+src.lng);
         return res;
     } catch (error: any) {
-      showToast("error", "Some error occurred while fetching price");
+      
+      showToast("error", error.response.data.message);
       console.log(error);
     }
   };
-
 
 
   return {

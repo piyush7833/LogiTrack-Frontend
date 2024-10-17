@@ -12,6 +12,7 @@ const ParticularBooking = ({ id }:propsType) => {
   const { role } = useSelector((state: { auth: { isLoggedIn: boolean; role: string; name: string } }) => state.auth);
   console.log(role)
     const {getParticularBooking}=useBooking()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [booking, setBooking] = React.useState<any>(null);
     useEffect(() => {
       const fetchBooking = async () => {
@@ -22,10 +23,6 @@ const ParticularBooking = ({ id }:propsType) => {
       };
       fetchBooking();
     }, [])
-
-  if (!booking) {
-    return <div className="p-6 max-w-3xl mx-auto">Booking details not found.</div>;
-  }
 
   return (
     <BookingMap bookingDatac={booking} setBookingDatac={setBooking} isDriver={role==="driver"}/>

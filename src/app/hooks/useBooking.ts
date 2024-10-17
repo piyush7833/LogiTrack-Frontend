@@ -6,6 +6,12 @@ import showToast from "@/components/common/showToast";
 
 
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const useBooking = () => {
 
   const { isLoading, sendAuthorizedRequest } =
@@ -33,7 +39,7 @@ const useBooking = () => {
     };
 
 
-    const handlePayment = async (bookingPrice,bookingId) => {
+    const handlePayment = async (bookingPrice:any,bookingId:any) => {
       const {
         data: { key },
       } = await axios.get("/getkey");
