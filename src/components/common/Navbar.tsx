@@ -40,7 +40,7 @@ const Navbar = () => {
   return (
     <div className="flex justify-between px-primaryX py-primaryY border-[1px] items-center z-10 w-full">
       <div className="logo">
-        <h1>logo</h1>
+        <h1>Atlan - Assignment</h1>
       </div>
       <div className="links hidden md:flex gap-4">
         {links.map((link, index) => (

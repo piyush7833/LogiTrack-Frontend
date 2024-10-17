@@ -12,7 +12,7 @@ const Booking = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       const res = await getAllBookings();
-      if (res && res.data) {
+      if (res && res.data && res.data.data) {
         setData(res.data.data.bookings);
       }
     };

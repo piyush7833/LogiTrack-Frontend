@@ -14,6 +14,7 @@ interface LatLng {
   }
 
 const useMap = () => {
+  
  const handleSearch = async (
   query: string,
   isLocationA: boolean,

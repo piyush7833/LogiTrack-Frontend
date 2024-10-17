@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 import React, { useEffect, useState } from "react";
-import Card from "@/components/common/Card";
 import { PiPlusCircleBold } from "react-icons/pi";
 import DialogBox from "@/components/common/DialogBox";
 import useDriver from "@/app/hooks/useDriver";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
+import CommonCard from "@/components/common/CommonCard";
 
 type DriverType = {
   _id: string;
@@ -48,7 +48,7 @@ const Driver = () => {
 
       <div className="flex w-full flex-wrap gap-4 justify-center px-primaryX py-primaryY">
         {drivers.length>0 &&  drivers.map((item:DriverType, index:any) => (
-          <Card key={index} title={item?.name} desc={item?.email} secondaryText={item?.licenseNumber} primaryText={item?.vehicle?"Vehicle :- "+item?.vehicle.model:undefined}  onDelete={()=>{deleteDriver(item?._id)}} onClick={()=>{router.push(`/admin/driver/${item._id}`)}} />
+          <CommonCard key={index} title={item?.name} desc={`Email:- ${item?.email}`} secondaryText={item?.licenseNumber} primaryText={item?.vehicle?"Vehicle :- "+item?.vehicle.model:undefined}  onDelete={()=>{deleteDriver(item?._id)}} onClick={()=>{router.push(`/admin/driver/${item._id}?name=${item.name}`)}} img="/images/driver.jpg" />
         ))}
         <button
           onClick={() => setIsOpen(true)}

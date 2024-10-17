@@ -21,3 +21,5 @@ export const formatTime = (seconds: number): string => {
   const formattedTime = `${hours} hrs ${minutes} mins`;
   return formattedTime;
 };
+
+

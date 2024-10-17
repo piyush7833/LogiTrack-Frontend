@@ -30,7 +30,7 @@ const Auth = () => {
   };
 
   const formFields =isLogin ?[{ name: "email", type: "email", required: true },{ name: "password", type: "password", required: true }]: 
-  [{ name: "name", type: "text", required: true },{ name: "username", type: "text", required: true },{ name: "phone", type: "phone", required: true }, { name: "email", type: "email", required: true },{ name: "password", type: "password", required: true },{ name: "confirmPassword", type: "password", required: !isLogin },{name:"role",type:"select",options:["Select Role","user","driver","admin"]}];
+  [{ name: "name", type: "text", required: true },{ name: "username", type: "text", required: true },{ name: "phone", type: "phone", required: true }, { name: "email", type: "email", required: true },{ name: "password", type: "password", required: true },{ name: "confirmPassword", type: "password", required: !isLogin },{name:"role",type:"select",options:["Select Role","user","admin"]}];
 
   const [formValues, setFormValues] = useState({});
 

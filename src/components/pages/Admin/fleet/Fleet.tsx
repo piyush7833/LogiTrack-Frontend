@@ -8,7 +8,8 @@ import useVehicle from "@/app/hooks/useVehicle";
 import { useSelector } from "react-redux";
 import useDriver from "@/app/hooks/useDriver";
 import { useRouter } from "next/navigation";
-import Button from "@/components/common/Button";
+import { imgMaps } from "../../../../../config/constantMaps";
+import CommonCard from "@/components/common/CommonCard";
 
 type VehicleType = {
   _id: string;
@@ -67,13 +68,17 @@ const Fleet = () => {
     setIsEditOpen(false);
   }
   console.log(vehicles,"Vehicles")
+  const handleRemoveDriver = () => {
+    updateVehicle({driverId:"Remove Driver"},isEditOpen as string);
+  }
   return (
     <div className="min-h-screen ">
 
+        <p className="text-lg font-semibold mb-4">Total Vehicles: {vehicles.length}</p>
       <div className="flex w-full flex-wrap gap-4 justify-center px-primaryX py-primaryY">
         {vehicles.length>0 &&  vehicles.map((item:VehicleType, index:any) => (
-          <Card key={index} title={item?.model} desc={item?.numberPlate} vehicleType={item?.type} driver={item?.driver?.name || "No driver"}  onDelete={()=>{deleteVehicle((item?._id) as string)}}
-          onEdit={()=>{setIsEditOpen(item._id)}} onClick={()=>{router.push(`/admin/fleet/${item._id}`)}}
+          <CommonCard key={index} title={item?.model} desc={item?.numberPlate} vehicleType={item?.type} driver={item?.driver?.name || "No driver"}  onDelete={()=>{deleteVehicle((item?._id) as string)}}
+          onEdit={()=>{setIsEditOpen(item._id)}} img={imgMaps[item.type as keyof typeof imgMaps]} onClick={()=>{router.push(`/admin/fleet/${item._id}?model=${item.model}&numberPlate=${item.numberPlate}`)}}
           />
         ))}
         <button
@@ -84,68 +89,78 @@ const Fleet = () => {
         </button>
       </div>
 
+
       {/* Custom Dialog for Editing Vehicle */}
-      <DialogBox isOpen={isEditOpen!==false} onClose={() => setIsEditOpen(false)} title="Edit Vehicle">
-        <form onSubmit={(e) => handleUpdateVehicle(e)}>
-          <div className="mb-4">
-            <label className="block mb-1">Type</label>
-            <select
-              name="type"
-              required
-              onChange={(e) => handleEditChange(e)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
-            >
-              {["select type", "truck", "mini truck", "big truck"].map((option) => (
-                <option key={option} value={option}>
-                  {option.charAt(0).toUpperCase() + option.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1">Model</label>
-            <input
-              type="text"
-              onChange={(e) => handleEditChange(e)}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1">Number Plate</label>
-            <input
-              type="text"
-              onChange={(e) => handleEditChange(e)}
-              className="w-full border rounded p-2"
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block mb-1">Driver</label>
-            <select
-              name="driverId"
-              onChange={(e) => handleEditChange(e)}
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
-            >
-              <option value="">Select Driver</option>
-              <option value="Remove Driver">Remove Driver</option>
-                {drivers
-                .filter((driver) => !driver.vehicle)
-                .map((driver) => (
-                  <option key={driver._id} value={driver._id}>
-                  {driver.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition"
-            >
-              Update Vehicle
-            </button>
-          </div>
-        </form>
+      <DialogBox isOpen={isEditOpen !== false} onClose={() => setIsEditOpen(false)} title="Edit Vehicle">
+  <form onSubmit={(e) => handleUpdateVehicle(e)}>
+    <div className="mb-4">
+      <label className="block mb-1">Type</label>
+      <select
+        name="type"
+        required
+        onChange={(e) => handleEditChange(e)}
+        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+      >
+        {["select type", "truck", "mini truck", "big truck"].map((option) => (
+          <option key={option} value={option}>
+            {option.charAt(0).toUpperCase() + option.slice(1)}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="mb-4">
+      <label className="block mb-1">Model</label>
+      <input
+        type="text"
+        onChange={(e) => handleEditChange(e)}
+        className="w-full border rounded p-2"
+      />
+    </div>
+    <div className="mb-4">
+      <label className="block mb-1">Number Plate</label>
+      <input
+        type="text"
+        onChange={(e) => handleEditChange(e)}
+        className="w-full border rounded p-2"
+      />
+    </div>
+    <div className="mb-4">
+      <label className="block mb-1">Driver</label>
+      <select
+        name="driverId"
+        onChange={(e) => handleEditChange(e)}
+        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-blue-200"
+      >
+        <option value="">Select Driver</option>
+        {drivers
+          .filter((driver) => !driver.vehicle)
+          .map((driver) => (
+            <option key={driver._id} value={driver._id}>
+              {driver.name}
+            </option>
+          ))}
+      </select>
+      <div className="mt-2">
+        <button
+          type="button"
+          onClick={() => handleRemoveDriver()}
+          className="text-red-600 hover:underline"
+        >
+          Remove Driver
+        </button>
+      </div>
+    </div>
+    <div className="flex justify-end">
+      <button
+        type="submit"
+        className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 transition"
+      >
+        Update Vehicle
+      </button>
+    </div>
+  </form>
       </DialogBox>
+
 
       {/* Custom Dialog for Adding Vehicle */}
       <DialogBox isOpen={isOpen} onClose={() => setIsOpen(false)} title="Add New Vehicle">
@@ -196,6 +211,7 @@ const Fleet = () => {
           </div>
         </form>
       </DialogBox>
+
     </div>
   );
 };

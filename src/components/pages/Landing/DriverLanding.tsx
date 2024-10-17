@@ -1,17 +1,21 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useContext, useEffect, useState } from "react";
 import useCookie from "@/app/hooks/useCookie";
 import { SocketContext } from "@/providers/socketProvider";
 import BookingModal from "@/components/common/BookingModal";
 import useBooking from "@/app/hooks/useBooking";
 
+type propsType={
+  bookingDatac:any,
+  setBookingDatac:any
+}
 
-
-const  DriverLanding= () => {
+const  DriverLanding= ({setBookingDatac,bookingDatac}:propsType) => {
   const { getCookie } = useCookie();  
   const { socket,locationSocket } = useContext(SocketContext);
   const userId = getCookie("driverId");
 
-  const [bookingData, setBookingData] = useState<any>(null);
+  // const [bookingDatac, setBookingDatac] = useState<any>(null);
   const [notificationData, setNotificationData] = useState<any>(null);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isAccepted, setIsAccepted] = useState(false);
@@ -27,7 +31,6 @@ const  DriverLanding= () => {
         const audio = new Audio("/audio/ring.mp3");
         audio.play();
       };
-      console.log(locationSocket,"locations")
       if(locationSocket){
         locationSocket.emit("connection")
         navigator.geolocation.watchPosition(
@@ -50,16 +53,19 @@ const  DriverLanding= () => {
 
       socket.on("newBooking", (data) => {
         playNotificationSound();
-        setBookingData(data.booking);
+        setBookingDatac(data.booking);
         setNotificationData(data.notification);
         setIsNotificationOpen(true);
       });
 
-      socket.on("bookingCancelled", ({ bookingId }) => {
-        console.log(`Booking ${bookingId} has been cancelled.`);
-        if (bookingData && bookingData._id === bookingId) {
-          setBookingData(null);
+      socket.on("bookingCancelled", ({ booking }) => {
+        console.log(`Booking ${booking} has been cancelled.`);
+        if (bookingDatac && bookingDatac._id === booking._id) {
+          setBookingDatac(null);
           setIsNotificationOpen(false);
+          setCurrentStatus("cancelled")
+          setIsAccepted(false);
+          setBookingDatac(null);
         }
       });
     }
@@ -70,29 +76,29 @@ const  DriverLanding= () => {
         socket.off("bookingCancelled");
       }
     };
-  }, [socket, userId, bookingData]);
+  }, [socket, userId, bookingDatac]);
 
   const handleAccept = () => {
-    if (socket && bookingData) {
-      socket.emit("acceptBooking", { bookingId: bookingData._id, driverId: userId });
+    if (socket && bookingDatac) {
+      socket.emit("acceptBooking", { bookingId: bookingDatac._id, driverId: userId });
       setIsAccepted(true);
-      setBookingData(bookingData);
-      console.log("object",bookingData);
+      setBookingDatac(bookingDatac);
+      console.log("object",bookingDatac);
       setIsNotificationOpen(false);
     }
   };
 
   const handleReject = () => {
-    if (socket && bookingData) {
-      socket.emit("rejectBooking", { bookingId: bookingData._id, driverId: userId });
-      setBookingData(null);
+    if (socket && bookingDatac) {
+      socket.emit("rejectBooking", { bookingId: bookingDatac._id, driverId: userId });
+      setBookingDatac(null);
       setIsNotificationOpen(false);
       setIsAccepted(false);
     }
   };
 
   const handleClose = () => {
-    setBookingData(null);
+    setBookingDatac(null);
     setIsNotificationOpen(false);
     setIsAccepted(false);
   };
@@ -116,9 +122,9 @@ const  DriverLanding= () => {
       </div>
       }
     {isAccepted && (
-        <div className="fixed top-16 right-0 h-[90vh] bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-10 w-1/3">
+        <div className="fixed top-16 right-0 h-[90vh] bg-white border border-gray-300 rounded-lg shadow-lg p-4 z-[1000] w-1/3">
           <div className="flex flex-col items-center">
-            <h2 className="text-lg font-bold mb-2">Booking Accepted</h2>
+            <h2 className="text-lg font-bold mb-2">Booking Status</h2>
             <p className="text-sm mb-4">{notificationData?.srcName + " -> " + notificationData?.destnName}</p>
             <div className="w-full">
               {statusSteps.map((status, index) => (
@@ -142,8 +148,8 @@ const  DriverLanding= () => {
                 <div
                   className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
                   onClick={() => {
-                    if(bookingData){
-                      updateBookingStatus(bookingData._id, "collected");
+                    if(bookingDatac){
+                      updateBookingStatus(bookingDatac._id, "collected");
                       setCurrentStatus("collected");
                     }
                      }}
@@ -155,11 +161,11 @@ const  DriverLanding= () => {
                 <div
                   className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
                   onClick={() => {
-                    if(bookingData){
-                      updateBookingStatus(bookingData._id, "completed");
+                    if(bookingDatac){
+                      updateBookingStatus(bookingDatac._id, "completed");
                       setCurrentStatus("completed");
                       setIsAccepted(false);
-                    setBookingData(null);
+                      setBookingDatac(null);
                     }
                      }}
                 >
@@ -169,11 +175,11 @@ const  DriverLanding= () => {
               {currentStatus==="accepted" && <div
                 className="flex items-center justify-center py-2 px-4 border border-gray-300 rounded-lg cursor-pointer bg-gray-100 hover:bg-gray-200"
                 onClick={() => {
-                  if(bookingData){
-                    updateBookingStatus(bookingData._id, "cancelled");
+                  if(bookingDatac){
+                    updateBookingStatus(bookingDatac._id, "cancelled");
                     setCurrentStatus("cancelled");
                     setIsAccepted(false);
-                    setBookingData(null);
+                    setBookingDatac(null);
                   }
                    }}
               >

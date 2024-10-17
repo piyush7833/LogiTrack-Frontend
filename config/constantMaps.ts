@@ -32,3 +32,9 @@ export const vehicles = [
       time: null,
     },
   ];
+
+  export const imgMaps={
+    "mini truck":"/images/mini-truck.png",
+    "truck":"/images/truck.png",
+    "big truck":"/images/big-truck.png"
+}
