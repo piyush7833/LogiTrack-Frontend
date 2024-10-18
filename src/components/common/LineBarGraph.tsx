@@ -26,7 +26,7 @@ const LineBarGraph = ({ graphData, XLabel, YLabel, areaColor, lineColor, barColo
     if (active && payload && payload.length) {
       return (
         <div className=" bg-white bg-opacity-40 dark:bg-opacity-10 backdrop-blur-lg p-2">
-          <p className="label">{`${XLabel || `Date`} : ${typeof label !== 'string' ? label.toString().split('T')[1] ? formatDate(label) : label : label.split('T')[1] ? formatDate(label) : label}`}</p>
+          <p className="label">{`${XLabel || `Date`} : ${typeof label !== 'string' ? label.toString().split('T')[1] ? formatDate(label) : label: label}`}</p>
           <p className="label">{`${YLabel || `Value`} : ${payload[0].value}`}</p>
         </div>
       );

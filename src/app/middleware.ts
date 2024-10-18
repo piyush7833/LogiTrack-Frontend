@@ -7,22 +7,21 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname
   const isNotProtected = path === '/auth'
 
-  const isAdmin = path.startsWith('/admin');
+  const isNotAdmin = path.startsWith('/');
   const token = request.cookies.get('token')?.value || '';
   const role = request.cookies.get('role')?.value || '';
   if (!isNotProtected && !token) {
     return NextResponse.redirect(new URL('/auth', request.nextUrl))
   }
 
-  if (isAdmin && role !== "Admin") {
-    return NextResponse.redirect(new URL('/', request.nextUrl))
+  if (isNotAdmin && role == "admin") {
+    return NextResponse.redirect(new URL('/fleet', request.nextUrl))
   }
 
 }
 // See "Matching Paths" below to learn more
 export const config = {
   matcher: [
-    '/admin/:path*',
-    '/*'
+    '/:path*'
   ]
 }

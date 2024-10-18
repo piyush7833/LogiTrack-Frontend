@@ -15,10 +15,9 @@ const Navbar = () => {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const router = useRouter();
   const commonLinks = [
-    { name: "Home", path: "/" },
     { name: "Profile", path: "/profile" },
   ];
-  const NoAdminLinks=[{ name: "Bookings", path: "/bookings" },]
+  const NoAdminLinks=[{ name: "Home", path: "/" },{ name: "Bookings", path: "/bookings" },]
   const adminLinks = [
     { name: "Fleet", path: "/admin/fleet" },
     { name: "Drivers", path: "/admin/driver" },
@@ -33,7 +32,7 @@ const Navbar = () => {
     if (role === "admin") {
       setLinks([...commonLinks, ...adminLinks]);
     }else{
-      setLinks([...commonLinks, ...NoAdminLinks]);
+      setLinks([ ...NoAdminLinks,...commonLinks]);
     }
   }, [role]);
 

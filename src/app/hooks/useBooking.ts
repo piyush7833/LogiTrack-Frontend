@@ -75,7 +75,6 @@ const useBooking = () => {
               true,
               true
             );
-            showToast("success", "Payment Successful");
           } catch (error) {
             console.log(error,"error");
             showToast("error", "Some error occurred");

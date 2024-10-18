@@ -101,7 +101,7 @@ const HeroStepper = ({
               >
                 Book Another
               </button>}
-              {(!bookingDatac && bookingDatac?.paymentId) && <button
+              {(!bookingDatac || !bookingDatac?.paymentId) && <button
                 className="w-auto py-2 px-4 border border-transparent text-white rounded-lg font-semibold transition-all duration-300 bg-blue-600 hover:bg-blue-700"
                 onClick={() => {
                   Payment()
