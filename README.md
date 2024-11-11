@@ -37,7 +37,7 @@
 ## System Design
 
 <!-- image of architecture -->
-![Architecture Design](https://drive.google.com/file/d/1-mXkEdI_ikrihqudvvs-IDLUmIT3qAJg/view?usp=drive_link)
+![Architecture Design](https://drive.google.com/uc?export=view&id=1-mXkEdI_ikrihqudvvs-IDLUmIT3qAJg&output=embed)
 
 ### Scalability
 - **Concurrent Request Handling**  
